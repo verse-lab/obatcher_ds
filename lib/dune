@@ -1,0 +1,5 @@
+(library
+ (libraries domainslib unix batteries)
+ (public_name obatcher_ds)
+ (name obatcher_ds)
+ (modes native))

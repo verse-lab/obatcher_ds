@@ -1,0 +1,13 @@
+(executable
+ (name bench)
+ (libraries
+  ; command line parsing
+  cmdliner
+  ; timing
+  ptime
+  ptime.clock.os
+  ; progress bars
+  progress
+  domainslib
+  obatcher_ds)
+ (modes native))

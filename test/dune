@@ -1,0 +1,4 @@
+(test
+ (libraries obatcher_ds)
+ (name test_avltree)
+ (modules test_avltree))
