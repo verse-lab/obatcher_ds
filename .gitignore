@@ -1,1 +1,8 @@
+# Dune build directory
 _build/
+
+# Python virtual environment
+venv/
+
+# Python binaries
+__pycache__/
