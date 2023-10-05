@@ -44,7 +44,7 @@ For benchmarking, navigate to the `benchmark/` directory and use `make` commands
 
 ```
 cd benchmark
-make avltree_batched
+make avltree-batched
 ```
 
 See the Makefile for the full list of benchmarks that can be run this way. A more advisable way to run the benchmarks would be to use the provided Jupyter Notebook. It is recommended to set up a Python virtual environment for this purpose:
