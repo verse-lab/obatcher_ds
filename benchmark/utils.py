@@ -19,7 +19,8 @@ def run_process(name, no_iters=5, count=1_000_000,
                 graph_nodes=None,
                 expensive_searches=None
                 ):
-    cmd = ["../_build/default/benchmark/bench.exe", name, "-D", str(domains),
+    name_args = name.split(" ")
+    cmd = ["../_build/default/benchmark/bench.exe", *name_args, "-D", str(domains),
            "--no-iter", str(no_iters), "--count", str(count)]
     if validate:
         cmd += ["-T"]
