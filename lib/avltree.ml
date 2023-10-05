@@ -3,9 +3,24 @@ let avltree_insert_sequential_threshold = ref 128
 let avltree_insert_height_threshold = ref 7
 let avltree_search_sequential_threshold = ref 30
 let avltree_search_height_threshold = ref 4
-let avltree_insert_type = ref 0
-let avltree_search_type = ref 0
 let avltree_binary_search_threshold = ref 200
+
+let avltree_insert_type = ref 0
+(*
+  0: parallelise equal sub-batches, split tree accordingly
+  1: always split at root node, binary search in insert array
+  2: always split at root node, linear search in insert array
+  3: always split at root node, binary & linear search in insert array
+  *)
+
+let avltree_search_type = ref 0
+(*
+  0: parallelise all queries, start at root node
+  1: parallelise equal sub-batches, start at root node
+  2: always split at root node, binary search in search array
+  3: always split at root node, linear search in search array
+  4: always split at root node, binary & linear search in search array
+ *)
 
 (* let avltree_search_sequential_threshold = ref 1
 let avltree_search_height_threshold = ref 0 *)

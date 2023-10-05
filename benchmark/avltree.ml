@@ -44,7 +44,7 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
   let insert_type =
     Arg.(value @@ opt (some int) None @@ info ~doc:"Which parallel insert to use" ["insert-type"]) in
   let search_type =
-    Arg.(value @@ opt (some int) None @@ info ~doc:"Which parallel search to use" ["insert-type"]) in
+    Arg.(value @@ opt (some int) None @@ info ~doc:"Which parallel search to use" ["search-type"]) in
 
   Term.(const (fun sorted no_searches min max
                 initial_count validate search_threshold insert_threshold search_type insert_type
