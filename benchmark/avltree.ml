@@ -10,6 +10,8 @@ type generic_spec_args = {
   should_validate: bool;
   search_threshold: int option;
   insert_threshold: int option;
+  search_type: int option;
+  insert_type: int option;
 }
 
 type generic_test_spec = {
@@ -39,9 +41,13 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
   let insert_threshold =
     Arg.(value @@ opt (some int) None @@
          info ~doc:"Threshold upon which inserts should be sequential" ["insert-threshold"]) in
+  let insert_type =
+    Arg.(value @@ opt (some int) None @@ info ~doc:"Which parallel insert to use" ["insert-type"]) in
+  let search_type =
+    Arg.(value @@ opt (some int) None @@ info ~doc:"Which parallel search to use" ["insert-type"]) in
 
   Term.(const (fun sorted no_searches min max
-                initial_count validate search_threshold insert_threshold
+                initial_count validate search_threshold insert_threshold search_type insert_type
                  -> {
       sorted;
       no_searches=Option.value ~default:0 no_searches;
@@ -50,9 +56,11 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
       max=Option.value ~default:((Int.shift_left 1 30) - 1) max;
       should_validate=validate;
       search_threshold;
-      insert_threshold
+      insert_threshold;
+      search_type;
+      insert_type;
     }) $ sorted $ no_searches $ min $ max $ initial_count $
-        validate $ search_threshold $ insert_threshold)
+        validate $ search_threshold $ insert_threshold $ search_type $ insert_type)
 
 let generic_test_spec ~count spec_args =
   { args=spec_args; count: int; insert_elements=[| |]; search_elements=[| |]; initial_elements=[| |] }
@@ -60,13 +68,21 @@ let generic_test_spec ~count spec_args =
 let generic_run test_spec f =
   let old_search_threshold = !Obatcher_ds.Avltree.avltree_search_sequential_threshold in
   let old_insert_threshold = !Obatcher_ds.Avltree.avltree_search_sequential_threshold in
+  let old_search_type = !Obatcher_ds.Avltree.avltree_search_type in
+  let old_insert_type = !Obatcher_ds.Avltree.avltree_insert_type in
   (match test_spec.args.search_threshold with None -> () | Some st ->
     Obatcher_ds.Avltree.avltree_search_sequential_threshold := st);
   (match test_spec.args.insert_threshold with None -> () | Some it ->
     Obatcher_ds.Avltree.avltree_insert_sequential_threshold := it);
+  (match test_spec.args.search_type with None -> () | Some it ->
+    Obatcher_ds.Avltree.avltree_search_type := it);
+  (match test_spec.args.insert_type with None -> () | Some it ->
+    Obatcher_ds.Avltree.avltree_insert_type := it);
   let res = f () in
   Obatcher_ds.Avltree.avltree_search_sequential_threshold := old_search_threshold;
   Obatcher_ds.Avltree.avltree_insert_sequential_threshold := old_insert_threshold;
+  Obatcher_ds.Avltree.avltree_search_type := old_search_type;
+  Obatcher_ds.Avltree.avltree_insert_type := old_insert_type;
   res
   
 let generic_init test_spec f =
