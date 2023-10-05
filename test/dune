@@ -2,3 +2,8 @@
  (libraries obatcher_ds)
  (name test_avltree)
  (modules test_avltree))
+
+(test
+ (libraries obatcher_ds)
+ (name test_rbtree)
+ (modules test_rbtree))

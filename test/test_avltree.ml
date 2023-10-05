@@ -1,7 +1,8 @@
 [@@@warning "-32-26"]
 module IntAvltree = Obatcher_ds.Avltree.Make(Int);;
-let num_nodes = 2000000;;
+let num_nodes = 10000000;;
 let max_key = num_nodes;;
+Printf.printf "\nTesting AVL tree with max %d nodes...\n" num_nodes;;
 
 
 Printf.printf "\nStarting join test for AVL...\n";;

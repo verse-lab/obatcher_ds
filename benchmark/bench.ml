@@ -36,39 +36,18 @@ end
 let benchmarks: (string, (module BENCHMARK)) Hashtbl.t = Hashtbl.create 32
 
 let () =
-  (* Hashtbl.add benchmarks "rbtree-sequential" (module Rbtree.Sequential);
-  Hashtbl.add benchmarks "rbtree-batched" (module Rbtree.Batched); *)
+  Hashtbl.add benchmarks "rbtree-sequential" (module Rbtree.Sequential);
+  Hashtbl.add benchmarks "rbtree-batched" (module Rbtree.Batched);
 
   Hashtbl.add benchmarks "avltree-sequential" (module Avltree.Sequential);
-  Hashtbl.add benchmarks "avltree-batched" (module Avltree.Batched)
+  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltree.CoarseGrained);
+  Hashtbl.add benchmarks "avltree-batched" (module Avltree.Batched);
+  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltree.ExplicitlyBatched);
 
-  (* Hashtbl.add benchmarks "btree-sequential" (module Btree.Sequential);
+  Hashtbl.add benchmarks "btree-sequential" (module Btree.Sequential);
   Hashtbl.add benchmarks "btree-coarse-grained" (module Btree.CoarseGrained);
   Hashtbl.add benchmarks "btree-batched" (module Btree.Batched);
-  Hashtbl.add benchmarks "btree-explicitly-batched" (module Btree.ExplicitlyBatched);
-
-  Hashtbl.add benchmarks "counter-sequential" (module Counter.Sequential);
-  Hashtbl.add benchmarks "counter-coarse-grained" (module Counter.CoarseGrained);
-  Hashtbl.add benchmarks "counter-batched" (module Counter.Batched);
-
-  Hashtbl.add benchmarks "skiplist-sequential" (module Skiplist.Sequential);
-  Hashtbl.add benchmarks "skiplist-coarse-grained" (module Skiplist.CoarseGrained);
-  Hashtbl.add benchmarks "skiplist-batched" (module Skiplist.Batched);
-  Hashtbl.add benchmarks "skiplist-explicitly-batched" (module Skiplist.ExplicitBatched);
-  Hashtbl.add benchmarks "skiplist-fine-grained" (module Skiplist.Lazy);
-
-  Hashtbl.add benchmarks "set-coarse-grained" (module Vanilla_set.CoarseGrained);
-  Hashtbl.add benchmarks "set-batched" (module Vanilla_set.Batched);
-  Hashtbl.add benchmarks "set-sequential" (module Vanilla_set.Sequential);
-
-  Hashtbl.add benchmarks "map-coarse-grained" (module Vanilla_map.CoarseGrained);
-  Hashtbl.add benchmarks "map-batched" (module Vanilla_map.Batched);
-  Hashtbl.add benchmarks "map-sequential" (module Vanilla_map.Sequential);
-
-  Hashtbl.add benchmarks "datalog-sequential" (module Datalog_bench.Sequential);
-  Hashtbl.add benchmarks "datalog-coarse" (module Datalog_bench.CoarseGrained);
-  Hashtbl.add benchmarks "datalog-batched" (module Datalog_bench.BatchParallel);
-  Hashtbl.add benchmarks "datalog-non-parallel-batched" (module Datalog_bench.BatchParallelBasic) *)
+  Hashtbl.add benchmarks "btree-explicitly-batched" (module Btree.ExplicitlyBatched)
 
 
 

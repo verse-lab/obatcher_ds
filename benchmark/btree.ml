@@ -1,5 +1,6 @@
-module IntAvltree = Obatcher_ds.Avltree.Make(Int)
-module BatchedIntAvltree = Domainslib.Batcher.Make1(IntAvltree)
+module IntSet = Set.Make(Int)
+module IntBtree = Obatcher_ds.Btree.Make(Int)
+module BatchedIntBtree = Domainslib.Batcher.Make1(IntBtree)
 
 type generic_spec_args = {
   sorted: bool;
@@ -9,7 +10,9 @@ type generic_spec_args = {
   initial_count: int;
   should_validate: bool;
   search_threshold: int option;
+  search_par_threshold: int option;
   insert_threshold: int option;
+  branching_factor: int option;
 }
 
 type generic_test_spec = {
@@ -19,6 +22,7 @@ type generic_test_spec = {
   mutable insert_elements: int array;
   mutable search_elements: int array;
 }
+
 
 let generic_spec_args: generic_spec_args Cmdliner.Term.t =
   let open Cmdliner in
@@ -36,13 +40,20 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
   let search_threshold =
     Arg.(value @@ opt (some int) None @@
          info ~doc:"Threshold upon which searches should be sequential" ["search-threshold"]) in
+  let search_par_threshold =
+    Arg.(value @@ opt (some int) None @@
+         info ~doc:"Threshold upon which searches should be done in parallel" ["search-par-threshold"]) in
+
   let insert_threshold =
     Arg.(value @@ opt (some int) None @@
-         info ~doc:"Threshold upon which inserts should be sequential" ["insert-threshold"]) in
+         info ~doc:"Threshold upon which searches should be sequential" ["insert-threshold"]) in
+  let branching_factor =
+    Arg.(value @@ opt (some int) None @@
+         info ~doc:"Branching factor of tree" ["branching-factor"]) in
 
   Term.(const (fun sorted no_searches min max
-                initial_count validate search_threshold insert_threshold
-                 -> {
+                initial_count validate search_threshold search_par_threshold insert_threshold
+                branching_factor -> {
       sorted;
       no_searches=Option.value ~default:0 no_searches;
       initial_count=Option.value ~default:0 initial_count;
@@ -50,25 +61,32 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
       max=Option.value ~default:((Int.shift_left 1 30) - 1) max;
       should_validate=validate;
       search_threshold;
-      insert_threshold
+      search_par_threshold;
+      insert_threshold;
+      branching_factor
     }) $ sorted $ no_searches $ min $ max $ initial_count $
-        validate $ search_threshold $ insert_threshold)
+        validate $ search_threshold $ search_par_threshold $ insert_threshold $ branching_factor)
 
 let generic_test_spec ~count spec_args =
   { args=spec_args; count: int; insert_elements=[| |]; search_elements=[| |]; initial_elements=[| |] }
 
 let generic_run test_spec f =
-  let old_search_threshold = !Obatcher_ds.Avltree.avltree_search_sequential_threshold in
-  let old_insert_threshold = !Obatcher_ds.Avltree.avltree_search_sequential_threshold in
-  (match test_spec.args.search_threshold with None -> () | Some st ->
-    Obatcher_ds.Avltree.avltree_search_sequential_threshold := st);
-  (match test_spec.args.insert_threshold with None -> () | Some it ->
-    Obatcher_ds.Avltree.avltree_insert_sequential_threshold := it);
+  let old_search_threshold = !Obatcher_ds.Btree.btree_search_sequential_threshold in
+  let old_search_par_threshold = !Obatcher_ds.Btree.btree_search_parallel_threshold in
+  let old_insert_threshold = !Obatcher_ds.Btree.btree_search_sequential_threshold in
+  let old_branching_factor = !Obatcher_ds.Btree.btree_max_children in
+  Obatcher_ds.Btree.btree_search_sequential_threshold := test_spec.args.search_threshold;
+  Obatcher_ds.Btree.btree_search_parallel_threshold := test_spec.args.search_par_threshold;
+  Obatcher_ds.Btree.btree_insert_sequential_threshold := test_spec.args.insert_threshold;
+  Option.iter (fun vl -> Obatcher_ds.Btree.btree_max_children := vl)
+    test_spec.args.branching_factor;
   let res = f () in
-  Obatcher_ds.Avltree.avltree_search_sequential_threshold := old_search_threshold;
-  Obatcher_ds.Avltree.avltree_insert_sequential_threshold := old_insert_threshold;
+  Obatcher_ds.Btree.btree_search_sequential_threshold := old_search_threshold;
+  Obatcher_ds.Btree.btree_search_parallel_threshold := old_search_par_threshold;
+  Obatcher_ds.Btree.btree_insert_sequential_threshold := old_insert_threshold;
+  Obatcher_ds.Btree.btree_max_children := old_branching_factor;
   res
-  
+
 let generic_init test_spec f =
   let min, max =  test_spec.args.min, test_spec.args.max in
   let elements = Util.gen_random_unique_array ~min ~max (test_spec.args.initial_count + test_spec.count) in
@@ -89,10 +107,11 @@ let generic_init test_spec f =
   test_spec.initial_elements <- initial_elements;
   test_spec.search_elements <- search_elements;
   generic_run test_spec @@ fun () -> f initial_elements 
+  
 
 module Sequential = struct
 
-  type t = unit IntAvltree.t
+  type t = unit IntBtree.t
 
   type test_spec = generic_test_spec
 
@@ -105,34 +124,37 @@ module Sequential = struct
 
   let init _pool test_spec =
     generic_init test_spec (fun initial_elements ->
-      let tree = IntAvltree.Sequential.new_tree () in
-      Array.iter (fun i -> IntAvltree.Sequential.insert i () tree)
+      let tree = IntBtree.Sequential.init () in
+      Array.iter (fun i -> IntBtree.Sequential.insert tree i ())
         initial_elements;
       tree
     )
 
+
   let run _pool t test_spec =
     generic_run test_spec @@ fun () -> 
     Array.iter (fun i ->
-        IntAvltree.Sequential.insert i () t
+        IntBtree.Sequential.insert t i ()
       ) test_spec.insert_elements;
     Array.iter (fun i ->
-        ignore @@ IntAvltree.Sequential.search i t
+        ignore @@ IntBtree.Sequential.search t i
       ) test_spec.search_elements
 
-  let cleanup (t: t) (test_spec: test_spec) = 
+  let cleanup (t: t) (test_spec: test_spec) =
     if test_spec.args.should_validate then begin
       Array.iter (fun elt ->
-        match IntAvltree.Sequential.search elt t with
+        match IntBtree.Sequential.search t elt with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
-      ) test_spec.insert_elements;
+      ) test_spec.insert_elements
     end
+    
 end
+
 
 module CoarseGrained = struct
 
-  type t = {tree: unit IntAvltree.t; mutex: Mutex.t}
+  type t = {tree: unit IntBtree.t; mutex: Mutex.t}
 
   type test_spec = generic_test_spec
 
@@ -145,8 +167,8 @@ module CoarseGrained = struct
 
   let init _pool test_spec =
     generic_init test_spec (fun initial_elements ->
-      let tree = IntAvltree.Sequential.new_tree () in
-      Array.iter (fun i -> IntAvltree.Sequential.insert i () tree)
+      let tree = IntBtree.Sequential.init () in
+      Array.iter (fun i -> IntBtree.Sequential.insert tree i ())
         initial_elements;
       let mutex = Mutex.create () in
       {tree;mutex}
@@ -160,16 +182,16 @@ module CoarseGrained = struct
           Mutex.lock t.mutex;
           Fun.protect ~finally:(fun () -> Mutex.unlock t.mutex) (fun () ->
               if i < Array.length test_spec.insert_elements
-              then IntAvltree.Sequential.insert test_spec.insert_elements.(i) () t.tree
-              else ignore (IntAvltree.Sequential.search
-                             test_spec.search_elements.(i - Array.length test_spec.insert_elements) t.tree)
+              then IntBtree.Sequential.insert t.tree test_spec.insert_elements.(i) ()
+              else ignore (IntBtree.Sequential.search t.tree
+                             test_spec.search_elements.(i - Array.length test_spec.insert_elements))
             )
         )
 
   let cleanup (t: t) (test_spec: test_spec) =
     if test_spec.args.should_validate then begin
       Array.iter (fun elt ->
-        match IntAvltree.Sequential.search elt t.tree with
+        match IntBtree.Sequential.search t.tree elt with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
       ) test_spec.insert_elements
@@ -177,9 +199,10 @@ module CoarseGrained = struct
 
 end
 
+
 module Batched = struct
 
-  type t = unit BatchedIntAvltree.t
+  type t = unit BatchedIntBtree.t
 
   type test_spec = generic_test_spec
 
@@ -192,8 +215,8 @@ module Batched = struct
 
   let init pool test_spec =
     generic_init test_spec (fun initial_elements ->
-      let tree = BatchedIntAvltree.init pool in
-      Array.iter (fun i -> BatchedIntAvltree.apply tree (Insert (i, ())))
+      let tree = BatchedIntBtree.init pool in
+      Array.iter (fun i -> BatchedIntBtree.apply tree (Insert (i, ())))
         initial_elements;
       tree)
 
@@ -203,25 +226,25 @@ module Batched = struct
       ~start:0 ~finish:(Array.length test_spec.insert_elements + Array.length test_spec.search_elements - 1)
       ~body:(fun i ->
         if i < Array.length test_spec.insert_elements
-        then BatchedIntAvltree.apply tree (Insert (test_spec.insert_elements.(i), ()))
+        then BatchedIntBtree.apply tree (Insert (test_spec.insert_elements.(i), ()))
         else 
-          ignore (BatchedIntAvltree.apply tree (Search test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
+          ignore (BatchedIntBtree.apply tree (Search test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
       )
 
+    
   let cleanup (t: t) (test_spec: test_spec) =
+    let t = BatchedIntBtree.unsafe_get_internal_data t in
     if test_spec.args.should_validate then begin
-      let t = BatchedIntAvltree.unsafe_get_internal_data t in
-      let num_nodes = IntAvltree.Sequential.num_nodes t in
-      if num_nodes <> Array.length test_spec.insert_elements + Array.length test_spec.initial_elements
-        then Format.ksprintf failwith "Inserted %d elements, but found only %d in the tree"
-      (Array.length test_spec.insert_elements + Array.length test_spec.initial_elements)
-      num_nodes;
-      let btree_flattened = IntAvltree.Sequential.flatten t |> Array.of_list in
+      if t.IntBtree.Sequential.root.no_elements <> Array.length test_spec.insert_elements + Array.length test_spec.initial_elements
+      then Format.ksprintf failwith "Inserted %d elements, but found only %d in the tree"
+             (Array.length test_spec.insert_elements + Array.length test_spec.initial_elements)
+             t.IntBtree.Sequential.root.no_elements;
+      let btree_flattened = IntBtree.flatten t.root |> Array.of_seq in
       let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
       Array.sort Int.compare all_elements;
       if Array.length btree_flattened <> Array.length all_elements then
-      Format.ksprintf failwith "length of flattened btree (%d) did not match inserts (%d) (no_elements=%d)"
-        (Array.length btree_flattened) (Array.length all_elements) (num_nodes);
+        Format.ksprintf failwith "length of flattened btree (%d) did not match inserts (%d) (no_elements=%d)"
+          (Array.length btree_flattened) (Array.length all_elements) (t.root.no_elements);
 
       for i = 0 to Array.length btree_flattened - 1 do
         if fst btree_flattened.(i) <> all_elements.(i) then
@@ -230,21 +253,22 @@ module Batched = struct
       done;
 
       Array.iter (fun elt ->
-        match IntAvltree.Sequential.search elt t with
+        match IntBtree.Sequential.search t elt with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
       ) test_spec.insert_elements;
-    end
+    end;
 
 end
 
+
 module ExplicitlyBatched = struct
 
-  type t = unit IntAvltree.t
+  type t = unit IntBtree.t
 
   type test_spec = {
     spec: generic_test_spec;
-    mutable insert_elements: (int * unit) array;
+    mutable sorted_insert_elements: (int * unit) array;
     mutable search_elements: (int * (unit option -> unit)) array;
   }
 
@@ -254,38 +278,37 @@ module ExplicitlyBatched = struct
 
   let test_spec ~count spec_args =
     let spec = generic_test_spec ~count spec_args in
-    {spec; insert_elements=[||]; search_elements=[||]}
+    {spec; sorted_insert_elements=[||]; search_elements=[||]}
 
   let init _pool (test_spec: test_spec) =
     generic_init test_spec.spec (fun initial_elements ->
-      test_spec.insert_elements <- Array.map (fun i -> (i, ())) test_spec.spec.insert_elements;
+      let tree = IntBtree.Sequential.init () in
+      test_spec.sorted_insert_elements <- Array.map (fun i -> (i, ())) test_spec.spec.insert_elements;
       test_spec.search_elements <- Array.map (fun i -> (i, (fun _ -> ()))) test_spec.spec.search_elements;
-      let tree = IntAvltree.Sequential.new_tree () in
-      Array.iter (fun i -> IntAvltree.Sequential.insert i () tree)
+      Array.sort (fun (k1,_) (k2, _) -> Int.compare k1 k2) test_spec.sorted_insert_elements;
+      Array.iter (fun i -> IntBtree.Sequential.insert tree i ())
         initial_elements;
       tree)
 
   let run pool (tree: t) test_spec =
     generic_run test_spec.spec @@ fun () -> 
-    if Array.length test_spec.insert_elements > 0 then
-      IntAvltree.par_insert ~pool tree test_spec.insert_elements;
+    if Array.length test_spec.sorted_insert_elements > 0 then
+      IntBtree.par_insert ~can_rebuild:false ~pool tree test_spec.sorted_insert_elements;
     if Array.length test_spec.spec.search_elements > 0 then
-      ignore @@ IntAvltree.par_search ~pool tree test_spec.search_elements
+      ignore @@ IntBtree.par_search ~pool tree test_spec.search_elements
 
-
-  let cleanup (t: t) (test_spec: test_spec) =
-    if test_spec.spec.args.should_validate then begin
-      let num_nodes = IntAvltree.Sequential.num_nodes t in
-      if num_nodes <> Array.length test_spec.insert_elements + Array.length test_spec.spec.initial_elements
-        then Format.ksprintf failwith "Inserted %d elements, but found only %d in the tree"
-      (Array.length test_spec.insert_elements + Array.length test_spec.spec.initial_elements)
-      num_nodes;
-      let btree_flattened = IntAvltree.Sequential.flatten t |> Array.of_list in
-      let all_elements = Array.concat [test_spec.spec.insert_elements; test_spec.spec.initial_elements] in
+  let cleanup (t: t) (test: test_spec) =
+    if test.spec.args.should_validate then begin
+      if t.IntBtree.Sequential.root.no_elements <> Array.length test.spec.insert_elements + Array.length test.spec.initial_elements
+      then Format.ksprintf failwith "Inserted %d elements, but found only %d in the tree"
+             (Array.length test.spec.insert_elements + Array.length test.spec.initial_elements)
+             t.IntBtree.Sequential.root.no_elements;
+      let btree_flattened = IntBtree.flatten t.root |> Array.of_seq in
+      let all_elements = Array.concat [test.spec.insert_elements; test.spec.initial_elements] in
       Array.sort Int.compare all_elements;
       if Array.length btree_flattened <> Array.length all_elements then
-      Format.ksprintf failwith "length of flattened btree (%d) did not match inserts (%d) (no_elements=%d)"
-        (Array.length btree_flattened) (Array.length all_elements) (num_nodes);
+        Format.ksprintf failwith "length of flattened btree (%d) did not match inserts (%d) (no_elements=%d)"
+          (Array.length btree_flattened) (Array.length all_elements) (t.root.no_elements);
 
       for i = 0 to Array.length btree_flattened - 1 do
         if fst btree_flattened.(i) <> all_elements.(i) then
@@ -294,10 +317,11 @@ module ExplicitlyBatched = struct
       done;
 
       Array.iter (fun elt ->
-        match IntAvltree.Sequential.search elt t with
+        match IntBtree.Sequential.search t elt with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
-      ) test_spec.spec.insert_elements;
+      ) test.spec.insert_elements;
     end
 
 end
+
