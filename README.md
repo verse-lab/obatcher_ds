@@ -10,8 +10,9 @@ First, set up OBatcher along with a new `opam` switch in a separate directory:
 
 ```
 opam switch create obatcher_test ocaml-base-compiler.5.0.0
-opam install dune batteries progress ptime cmdliner
 eval $(opam env)
+opam update
+opam install dune batteries progress ptime cmdliner
 git clone https://github.com/verse-lab/obatcher.git obatcher
 cd obatcher
 opam pin add domainslib file://`pwd`
@@ -20,7 +21,7 @@ opam pin add domainslib file://`pwd`
 Note: for VSCode users, you will want to run the following as well to reinstall the prerequisites for the OCaml Platform extension in the new switch:
 
 ```
-opam install ocamlformat ocaml-language-server
+opam install ocamlformat ocaml-lsp-server
 ```
 
 Exit the OBatcher directory. You can now clone and build the code in this repository.
@@ -49,7 +50,7 @@ make avltree_batched
 See the Makefile for the full list of benchmarks that can be run this way. A more advisable way to run the benchmarks would be to use the provided Jupyter Notebook. It is recommended to set up a Python virtual environment for this purpose:
 
 ```
-python -m venv venv
+python3 -m venv venv
 source ./venv/bin/activate
 pip install -r requirements.txt
 ```
