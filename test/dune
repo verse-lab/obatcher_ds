@@ -7,3 +7,8 @@
  (libraries obatcher_ds)
  (name test_rbtree)
  (modules test_rbtree))
+
+(test
+ (libraries obatcher_ds)
+ (name test_treap)
+ (modules test_treap))
