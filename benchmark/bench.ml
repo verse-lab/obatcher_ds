@@ -37,7 +37,9 @@ let benchmarks: (string, (module BENCHMARK)) Hashtbl.t = Hashtbl.create 32
 
 let () =
   Hashtbl.add benchmarks "rbtree-sequential" (module Rbtree.Sequential);
+  Hashtbl.add benchmarks "rbtree-coarse-grained" (module Rbtree.CoarseGrained);
   Hashtbl.add benchmarks "rbtree-batched" (module Rbtree.Batched);
+  Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbtree.ExplicitlyBatched);
 
   Hashtbl.add benchmarks "avltree-sequential" (module Avltree.Sequential);
   Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltree.CoarseGrained);
