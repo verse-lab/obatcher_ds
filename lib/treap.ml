@@ -1,11 +1,11 @@
 [@@@warning "-32-26"]
 let treap_insert_sequential_threshold = ref 128
 let treap_insert_height_threshold = ref 7
-let treap_search_sequential_threshold = ref 30
-let treap_search_height_threshold = ref 4
-let treap_binary_search_threshold = ref 200
+let treap_search_sequential_threshold = ref 100
+let treap_search_height_threshold = ref 6
+let treap_binary_search_threshold = ref 50
 
-let treap_insert_type = ref 0
+let treap_insert_type = ref 1
 (*
   0: parallelise equal sub-batches, split tree accordingly
   1: always split at root node, binary search in insert array
@@ -13,7 +13,7 @@ let treap_insert_type = ref 0
   3: always split at root node, binary & linear search in insert array
   *)
 
-let treap_search_type = ref 0
+let treap_search_type = ref 2
 (*
   0: parallelise all queries, start at root node
   1: parallelise equal sub-batches, start at root node

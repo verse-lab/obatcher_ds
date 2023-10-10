@@ -1,11 +1,11 @@
 [@@@warning "-32-26"]
 let avltree_insert_sequential_threshold = ref 128
 let avltree_insert_height_threshold = ref 7
-let avltree_search_sequential_threshold = ref 30
-let avltree_search_height_threshold = ref 4
-let avltree_binary_search_threshold = ref 200
+let avltree_search_sequential_threshold = ref 100
+let avltree_search_height_threshold = ref 6
+let avltree_binary_search_threshold = ref 50
 
-let avltree_insert_type = ref 0
+let avltree_insert_type = ref 1
 (*
   0: parallelise equal sub-batches, split tree accordingly
   1: always split at root node, binary search in insert array
@@ -13,7 +13,7 @@ let avltree_insert_type = ref 0
   3: always split at root node, binary & linear search in insert array
   *)
 
-let avltree_search_type = ref 0
+let avltree_search_type = ref 2
 (*
   0: parallelise all queries, start at root node
   1: parallelise equal sub-batches, start at root node
@@ -354,7 +354,7 @@ module Make (V: Map.OrderedType) = struct
       let k = Sequential.key node in
       let nval = Sequential.nval node in
       let s1 = ref rstart and s2 = ref rstart in
-      if n > 200 then begin
+      if n > !avltree_binary_search_threshold then begin
         let split = binary_search keys k rstart rstop in
         s1 := split; s2 := split;
         while !s1 > rstart && fst keys.(!s1 - 1) = k do
