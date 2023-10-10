@@ -124,6 +124,53 @@ module Sequential = struct
   let cleanup (_: t) (_: test_spec) = ()
 end
 
+module CoarseGrained = struct
+
+  type t = {tree: unit IntRbtree.t; mutex: Mutex.t}
+
+  type test_spec = generic_test_spec
+
+  type spec_args = generic_spec_args
+
+  let spec_args: spec_args Cmdliner.Term.t = generic_spec_args
+
+  let test_spec ~count spec_args =
+    generic_test_spec ~count spec_args
+
+  let init _pool test_spec =
+    generic_init test_spec (fun initial_elements ->
+      let tree = IntRbtree.Sequential.new_tree () in
+      Array.iter (fun i -> IntRbtree.Sequential.insert i () tree)
+        initial_elements;
+      let mutex = Mutex.create () in
+      {tree;mutex}
+    )
+
+  let run pool (t: t) test_spec =
+    generic_run test_spec @@ fun () ->
+    Domainslib.Task.parallel_for pool ~chunk_size:1
+      ~start:0 ~finish:(Array.length test_spec.insert_elements + Array.length test_spec.search_elements - 1)
+      ~body:(fun i ->
+          Mutex.lock t.mutex;
+          Fun.protect ~finally:(fun () -> Mutex.unlock t.mutex) (fun () ->
+              if i < Array.length test_spec.insert_elements
+              then IntRbtree.Sequential.insert test_spec.insert_elements.(i) () t.tree
+              else ignore (IntRbtree.Sequential.search
+                             test_spec.search_elements.(i - Array.length test_spec.insert_elements) t.tree)
+            )
+        )
+
+  let cleanup (t: t) (test_spec: test_spec) =
+    if test_spec.args.should_validate then begin
+      Array.iter (fun elt ->
+        match IntRbtree.Sequential.search elt t.tree with
+        | Some _ -> ()
+        | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
+      ) test_spec.insert_elements
+    end
+
+end
+
 module Batched = struct
 
   type t = unit BatchedIntRbtree.t
