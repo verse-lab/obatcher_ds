@@ -686,9 +686,13 @@ module Make (V: Map.OrderedType) = struct
   let run (type a) (t: a t) (pool: Domainslib.Task.pool) (ops: a wrapped_op array) : unit =
     let searches : (V.t * (a option -> unit)) list ref = ref [] in
     let inserts : (V.t * a) list ref = ref [] in
+    let kont_fst: (unit -> unit) option ref = ref None in
+    (* let kont_list : (unit -> unit) list ref = ref [] in *)
     let start_size = t.root.no_elements in
     Array.iter (fun (elt: a wrapped_op) -> match elt with
-      | Mk (Insert (key,vl), kont) -> kont (); inserts := (key,vl) :: !inserts
+      | Mk (Insert (key,vl), kont) ->
+        if !kont_fst = None then kont_fst := Some kont else kont ();
+        inserts := (key,vl) :: !inserts
       | Mk (Search key, kont) -> searches := (key, kont) :: !searches
       | Mk (Size,kont) -> kont start_size
     ) ops;
@@ -699,7 +703,8 @@ module Make (V: Map.OrderedType) = struct
     if Array.length inserts > 0 then begin
       Sort.sort pool ~compare:(fun (k1,_) (k2,_) -> V.compare k1 k2)
         inserts;
-      par_insert ~pool t inserts
+      par_insert ~pool t inserts;
+      match !kont_fst with None -> () | Some kont -> kont ()
     end
 
 end

@@ -1,9 +1,9 @@
 [@@@warning "-32-26"]
-let avltree_insert_sequential_threshold = ref 128
-let avltree_insert_height_threshold = ref 7
-let avltree_search_sequential_threshold = ref 100
-let avltree_search_height_threshold = ref 6
-let avltree_binary_search_threshold = ref 50
+let avltree_insert_sequential_threshold = ref 1000
+let avltree_insert_height_threshold = ref 1
+let avltree_search_sequential_threshold = ref 50
+let avltree_search_height_threshold = ref 4
+let avltree_binary_search_threshold = ref 32
 
 let avltree_insert_type = ref 1
 (*
@@ -632,21 +632,34 @@ module Make (V: Map.OrderedType) = struct
       let nt = Sequential.join lt nn rt in
       t.root <- nt.root
 
-  let par_insert ?threshold ~pool (t: 'a t) inserts =
+  let par_insert ?threshold ?kont_array ~pool (t: 'a t) inserts =
     let threshold = match threshold with Some t -> t | None -> !avltree_insert_sequential_threshold in
     Sort.sort pool ~compare:(fun (k, _) (k', _) -> V.compare k k') inserts;
-    match !avltree_insert_type with
+    let () = match !avltree_insert_type with
     | 0 -> par_insert_aux_0 threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | 1 -> par_insert_aux_1 threshold !avltree_insert_height_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | 2 -> par_insert_aux_2 threshold !avltree_insert_height_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | 3 -> par_insert_aux_3 threshold !avltree_insert_height_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
-    | _ -> failwith "Invalid insert type"
+    | _ -> failwith "Invalid insert type" in
+    match kont_array with
+    | None -> ()
+    | Some arr ->
+      (* Array.iter (fun kont -> kont ()) arr *)
+      let start = 0 and finish = Array.length inserts - 1 in
+      Domainslib.Task.parallel_for pool ~start ~finish ~chunk_size:((finish - start + 1)/8) ~body:(
+        fun i -> arr.(i) ()
+      )
 
   let run (type a) (t: a t) (pool: Domainslib.Task.pool) (ops: a wrapped_op array) =
     let searches: (V.t * (a option -> unit)) list ref = ref [] in
     let inserts: (V.t * a) list ref = ref [] in
+    let kont_fst: (unit -> unit) option ref = ref None in
+    (* let kont_list: (unit -> unit) list ref = ref [] in *)
     Array.iter (fun (elt: a wrapped_op) -> match elt with
-    | Mk (Insert (key, vl), kont) -> kont (); inserts := (key,vl) :: !inserts
+    | Mk (Insert (key, vl), kont) ->
+      (* kont_list := kont :: !kont_list; *)
+      if !kont_fst = None then kont_fst := Some kont else kont ();
+      inserts := (key,vl) :: !inserts
     | Mk (Search key, kont) -> searches := (key, kont) :: !searches
     ) ops;
 
@@ -657,9 +670,11 @@ module Make (V: Map.OrderedType) = struct
 
     (* Initiate parallel inserts *)
     let inserts = Array.of_list !inserts in
+    (* let kont_array = Array.of_list !kont_list in *)
     if Array.length inserts > 0 then begin
       Sort.sort pool ~compare:(fun (k1,_) (k2,_) -> V.compare k1 k2) inserts;
-      par_insert ~pool t inserts
+      par_insert ~pool t inserts;
+      match !kont_fst with None -> () | Some kont -> kont ()
     end
 
 end
