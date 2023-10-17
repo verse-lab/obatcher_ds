@@ -6,16 +6,14 @@ As this requires a custom version of the library `domainslib` for Multicore OCam
 
 ## Build instructions
 
-First, set up OBatcher along with a new `opam` switch in a separate directory:
+First, set up OBatcher along with a new `opam` switch:
 
 ```
-opam switch create obatcher_test ocaml-base-compiler.5.0.0
+opam switch create obatcher_test ocaml.5.0.0
 eval $(opam env)
 opam update
 opam install dune batteries progress ptime cmdliner
-git clone https://github.com/verse-lab/obatcher.git obatcher
-cd obatcher
-opam pin add domainslib file://`pwd`
+opam pin add domainslib https://github.com/verse-lab/obatcher.git
 ```
 
 Note: for VSCode users, you will want to run the following as well to reinstall the prerequisites for the OCaml Platform extension in the new switch:
@@ -24,7 +22,7 @@ Note: for VSCode users, you will want to run the following as well to reinstall 
 opam install ocamlformat ocaml-lsp-server
 ```
 
-Exit the OBatcher directory. You can now clone and build the code in this repository.
+You can now clone and build the code in this repository.
 
 ```
 git clone https://github.com/phongulus/obatcher_ds.git obatcher_ds
