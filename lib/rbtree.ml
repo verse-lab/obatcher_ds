@@ -861,11 +861,8 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
   let run (type a) (t: a t) (pool: Domainslib.Task.pool) (ops: a wrapped_op array) =
     let searches: (V.t * (a option -> unit)) list ref = ref [] in
     let inserts: (V.t * a) list ref = ref [] in
-    let kont_fst: (unit -> unit) option ref = ref None in
     Array.iter (fun (elt: a wrapped_op) -> match elt with
-    | Mk (Insert (key, vl), kont) ->
-      if !kont_fst = None then kont_fst := Some kont else kont ();
-      inserts := (key,vl) :: !inserts
+    | Mk (Insert (key, vl), kont) -> kont (); inserts := (key,vl) :: !inserts
     | Mk (Search key, kont) -> searches := (key, kont) :: !searches
     ) ops;
 
@@ -878,7 +875,6 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
     let inserts = Array.of_list !inserts in
     if Array.length inserts > 0 then begin
       Sort.sort pool ~compare:(fun (k1,_) (k2,_) -> V.compare k1 k2) inserts;
-      par_insert ~pool t inserts;
-      match !kont_fst with None -> () | Some kont -> kont ()
+      par_insert ~pool t inserts
     end
 end
