@@ -222,7 +222,8 @@ module Batched = struct
         then BatchedIntTreap.apply tree (Insert (test_spec.insert_elements.(i), ()))
         else 
           ignore (BatchedIntTreap.apply tree (Search test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
-      )
+      );
+    BatchedIntTreap.wait_for_batch tree
 
   let cleanup (t: t) (test_spec: test_spec) =
     if test_spec.args.should_validate then begin

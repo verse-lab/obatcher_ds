@@ -229,7 +229,8 @@ module Batched = struct
         then BatchedIntBtree.apply tree (Insert (test_spec.insert_elements.(i), ()))
         else 
           ignore (BatchedIntBtree.apply tree (Search test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
-      )
+      );
+    BatchedIntBtree.wait_for_batch tree
 
     
   let cleanup (t: t) (test_spec: test_spec) =
