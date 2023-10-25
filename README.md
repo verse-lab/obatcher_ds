@@ -13,7 +13,7 @@ opam switch create obatcher_test ocaml.5.0.0
 eval $(opam env)
 opam update
 opam install dune batteries progress ptime cmdliner
-opam pin add domainslib https://github.com/verse-lab/obatcher.git
+opam pin add domainslib https://github.com/phongulus/obatcher.git\#wait-for-batch
 ```
 
 Note: for VSCode users, you will want to run the following as well to reinstall the prerequisites for the OCaml Platform extension in the new switch:
