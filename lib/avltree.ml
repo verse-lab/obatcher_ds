@@ -30,7 +30,7 @@ module Make (V: Map.OrderedType) = struct
     type side = Left | Right
 
     type 'a node = Leaf | Node of {
-      key: V.t;
+      mutable key: V.t;
       mutable nval: 'a;
       (* mutable rl: side; *)
       mutable height: int;
@@ -195,6 +195,18 @@ module Make (V: Map.OrderedType) = struct
       set_height x @@ 1 + max (height @@ left x) (height @@ right x);
       set_height y @@ 1 + max (height @@ left y) (height @@ right y)
 
+    let rebalance_node n t =
+      let () = set_height n @@ max (height (left n)) (height (right n)) + 1 in
+      let balance = get_balance n in
+      if balance > 1 then
+        if height (left n) > height (right n) then
+          rotate_right n t
+        else (rotate_left (left n) t; rotate_right n t)
+      else if balance < -1 then
+        if height (right n) > height (left n) then
+          rotate_left n t
+        else (rotate_right (right n) t; rotate_left n t)
+
     let rec insert_aux new_node current_node t =
       if key new_node == key current_node then ()
       else begin
@@ -206,23 +218,52 @@ module Make (V: Map.OrderedType) = struct
           if right current_node == Leaf then
             set_child current_node Right new_node
           else insert_aux new_node (right current_node) t in
-
-        let () = set_height current_node @@ max (height (left current_node)) (height (right current_node)) + 1 in
-        let balance = get_balance current_node in
-        if balance > 1 && key new_node < key (left current_node) then
-          rotate_right current_node t
-        else if balance < -1 && key new_node > key (right current_node) then
-          rotate_left current_node t
-        else if balance > 1 && key new_node > key (left current_node) then
-          (rotate_left (left current_node) t; rotate_right current_node t)
-        else if balance < -1 && key new_node < key (right current_node) then
-          (rotate_right (right current_node) t; rotate_left current_node t)
+        rebalance_node current_node t
       end
 
     let insert k v t =
       let new_node = new_node k v in
       if t.root == Leaf then t.root <- new_node
       else insert_aux new_node t.root t
+
+    let rec find_min_node n =
+      match n with
+      | Leaf -> failwith "Find min node function: n is a leaf"
+      | Node n' ->
+        if n'.left == Leaf then n
+        else find_min_node (n'.left)
+
+    let rec delete_aux current_node k t =
+      if current_node == Leaf then ()
+      else if key current_node > k then
+        delete_aux (left current_node) k t
+      else if key current_node < k then
+        delete_aux (right current_node) k t
+      else begin
+        let p = parent current_node in
+        if left current_node = Leaf then
+          (if right p == current_node then
+            set_child p Right (right current_node)
+          else
+            set_child p Left (right current_node))
+        else if right current_node = Leaf then
+          (if right p == current_node then
+            set_child p Right (left current_node)
+          else
+            set_child p Left (left current_node))
+        else
+          let min_node = find_min_node (right current_node) in
+          match current_node with
+          | Leaf -> failwith "impossible error"
+          | Node n' ->
+            n'.key <- key min_node;
+            n'.nval <- nval min_node;
+            delete_aux (right current_node) (key min_node) t
+      end; rebalance_node current_node t
+
+    let delete k t =
+      if t.root == Leaf then ()
+      else delete_aux t.root k t
 
     let rec join_right tl k tr =
       let (l, k', c) = expose tl.root in
@@ -384,11 +425,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) @@ Some nval;
         s2 := !s2 + 1
       done; *)
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_4 op_threshold height_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_4 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
-      (* Domainslib.Task.await pool l; Domainslib.Task.await pool r *)
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_4 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (* Split the search operations only *)
   let rec par_search_aux_1 threshold pool t ~keys ~range:(rstart, rstop) =
@@ -425,10 +466,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) @@ Some nval;
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_2 op_threshold height_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_2 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_2 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (** Use linear search only to traverse operations array *)
   let rec par_search_aux_3 op_threshold height_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -448,10 +490,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) (Some nval);
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_3 op_threshold height_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_3 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_3 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   let par_search ?search_threshold ?tree_threshold ~pool (t: 'a t) keys =
     let search_threshold = match search_threshold with Some t -> t | None -> !avltree_search_sequential_threshold in
@@ -632,34 +675,21 @@ module Make (V: Map.OrderedType) = struct
       let nt = Sequential.join lt nn rt in
       t.root <- nt.root
 
-  let par_insert ?threshold ?kont_array ~pool (t: 'a t) inserts =
+  let par_insert ?threshold ~pool (t: 'a t) inserts =
     let threshold = match threshold with Some t -> t | None -> !avltree_insert_sequential_threshold in
     Sort.sort pool ~compare:(fun (k, _) (k', _) -> V.compare k k') inserts;
-    let () = match !avltree_insert_type with
+    match !avltree_insert_type with
     | 0 -> par_insert_aux_0 threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | 1 -> par_insert_aux_1 threshold !avltree_insert_height_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | 2 -> par_insert_aux_2 threshold !avltree_insert_height_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | 3 -> par_insert_aux_3 threshold !avltree_insert_height_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
-    | _ -> failwith "Invalid insert type" in
-    match kont_array with
-    | None -> ()
-    | Some arr ->
-      (* Array.iter (fun kont -> kont ()) arr *)
-      let start = 0 and finish = Array.length inserts - 1 in
-      Domainslib.Task.parallel_for pool ~start ~finish ~chunk_size:((finish - start + 1)/8) ~body:(
-        fun i -> arr.(i) ()
-      )
+    | _ -> failwith "Invalid insert type"
 
   let run (type a) (t: a t) (pool: Domainslib.Task.pool) (ops: a wrapped_op array) =
     let searches: (V.t * (a option -> unit)) list ref = ref [] in
     let inserts: (V.t * a) list ref = ref [] in
-    let kont_fst: (unit -> unit) option ref = ref None in
-    (* let kont_list: (unit -> unit) list ref = ref [] in *)
     Array.iter (fun (elt: a wrapped_op) -> match elt with
-    | Mk (Insert (key, vl), kont) ->
-      (* kont_list := kont :: !kont_list; *)
-      if !kont_fst = None then kont_fst := Some kont else kont ();
-      inserts := (key,vl) :: !inserts
+    | Mk (Insert (key, vl), kont) -> kont (); inserts := (key,vl) :: !inserts
     | Mk (Search key, kont) -> searches := (key, kont) :: !searches
     ) ops;
 
@@ -670,11 +700,9 @@ module Make (V: Map.OrderedType) = struct
 
     (* Initiate parallel inserts *)
     let inserts = Array.of_list !inserts in
-    (* let kont_array = Array.of_list !kont_list in *)
     if Array.length inserts > 0 then begin
       Sort.sort pool ~compare:(fun (k1,_) (k2,_) -> V.compare k1 k2) inserts;
       par_insert ~pool t inserts;
-      match !kont_fst with None -> () | Some kont -> kont ()
     end
 
 end
