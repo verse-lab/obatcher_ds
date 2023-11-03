@@ -282,10 +282,11 @@ module Make (V: Map.OrderedType) = struct
           s2 := !s2 + 1
         done;
       end;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_4 op_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_4 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_4 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (* Split the search operations only *)
   let rec par_search_aux_1 threshold pool t ~keys ~range:(rstart, rstop) =
@@ -322,10 +323,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) @@ Some nval;
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_2 op_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_2 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_2 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (** Use linear search only to traverse operations array *)
   let rec par_search_aux_3 op_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -345,10 +347,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) (Some nval);
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_3 op_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_3 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_3 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   let par_search ?search_threshold ~pool (t: 'a t) keys =
     let search_threshold = match search_threshold with Some t -> t | None -> !treap_search_sequential_threshold in

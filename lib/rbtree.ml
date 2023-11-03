@@ -658,10 +658,11 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
           s2 := !s2 + 1
         done;
       end;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_4 op_threshold height_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_4 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_4 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (* Split the search operations only *)
   let rec par_search_aux_1 threshold pool t ~keys ~range:(rstart, rstop) =
@@ -698,10 +699,11 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
         snd keys.(!s2) @@ Some nval;
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_2 op_threshold height_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_2 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_2 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (** Use linear search only to traverse operations array *)
   let rec par_search_aux_3 op_threshold height_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -721,10 +723,11 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
         snd keys.(!s2) (Some nval);
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_3 op_threshold height_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_3 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_3 op_threshold height_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   let par_search ?search_threshold ?tree_threshold ~pool (t: 'a t) keys =
     let search_threshold = match search_threshold with Some t -> t | None -> !rbtree_search_sequential_threshold in
@@ -861,11 +864,8 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
   let run (type a) (t: a t) (pool: Domainslib.Task.pool) (ops: a wrapped_op array) =
     let searches: (V.t * (a option -> unit)) list ref = ref [] in
     let inserts: (V.t * a) list ref = ref [] in
-    let kont_fst: (unit -> unit) option ref = ref None in
     Array.iter (fun (elt: a wrapped_op) -> match elt with
-    | Mk (Insert (key, vl), kont) ->
-      if !kont_fst = None then kont_fst := Some kont else kont ();
-      inserts := (key,vl) :: !inserts
+    | Mk (Insert (key, vl), kont) -> kont (); inserts := (key,vl) :: !inserts
     | Mk (Search key, kont) -> searches := (key, kont) :: !searches
     ) ops;
 
@@ -879,6 +879,5 @@ let rec par_insert_aux op_threshold height_threshold ~pool (t: 'a t) ~inserts ~r
     if Array.length inserts > 0 then begin
       Sort.sort pool ~compare:(fun (k1,_) (k2,_) -> V.compare k1 k2) inserts;
       par_insert ~pool t inserts;
-      match !kont_fst with None -> () | Some kont -> kont ()
     end
 end
