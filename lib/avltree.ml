@@ -235,19 +235,25 @@ module Make (V: Map.OrderedType) = struct
 
     let rec delete_aux current_node k t =
       if current_node == Leaf then ()
-      else if key current_node > k then
-        delete_aux (left current_node) k t
+      else if k < key current_node then
+        (delete_aux (left current_node) k t; rebalance_node current_node t)
       else if key current_node < k then
-        delete_aux (right current_node) k t
+        (delete_aux (right current_node) k t; rebalance_node current_node t)
       else begin
         let p = parent current_node in
         if left current_node = Leaf then
-          (if right p == current_node then
+          (if p == Leaf then
+            let (_, _, r) = expose current_node in
+            t.root <- r
+          else if right p == current_node then
             set_child p Right (right current_node)
           else
             set_child p Left (right current_node))
         else if right current_node = Leaf then
-          (if right p == current_node then
+          (if p == Leaf then
+            let (l, _, _) = expose current_node in
+            t.root <- l
+          else if right p == current_node then
             set_child p Right (left current_node)
           else
             set_child p Left (left current_node))
@@ -258,8 +264,9 @@ module Make (V: Map.OrderedType) = struct
           | Node n' ->
             n'.key <- key min_node;
             n'.nval <- nval min_node;
-            delete_aux (right current_node) (key min_node) t
-      end; rebalance_node current_node t
+            delete_aux n'.right (key min_node) t;
+            rebalance_node current_node t
+      end
 
     let delete k t =
       if t.root == Leaf then ()
