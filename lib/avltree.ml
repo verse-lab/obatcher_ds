@@ -199,11 +199,11 @@ module Make (V: Map.OrderedType) = struct
       let () = set_height n @@ max (height (left n)) (height (right n)) + 1 in
       let balance = get_balance n in
       if balance > 1 then
-        if height (left n) > height (right n) then
+        if height (left (left n)) > height (right (left n)) then
           rotate_right n t
         else (rotate_left (left n) t; rotate_right n t)
       else if balance < -1 then
-        if height (right n) > height (left n) then
+        if height (right (right n)) > height (left (right n)) then
           rotate_left n t
         else (rotate_right (right n) t; rotate_left n t)
 
