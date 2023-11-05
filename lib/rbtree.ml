@@ -29,7 +29,7 @@ module Make (V: Map.OrderedType) = struct
     type side = Left | Right;;
 
     type 'a rb_node = Leaf | Node of {
-      key: V.t;
+      mutable key: V.t;
       mutable tval: 'a;
       mutable colour: colour;
       mutable rl: side;
@@ -294,6 +294,47 @@ module Make (V: Map.OrderedType) = struct
         match t.root with
         | Leaf -> (n.colour <- Black; n.bheight <- 2; n.parent <- Leaf; t.root <- new_node)
         | Node _ -> (n.colour <- Red; insert_aux new_node t.root t)
+
+    let rec find_min_node n =
+      match n with
+      | Leaf -> failwith "Find min node function: n is a leaf"
+      | Node n' ->
+        if n'.left == Leaf then n
+        else find_min_node (n'.left)
+    
+    (* let rec delete_aux current_node k t =
+      if current_node == Leaf then ()
+      else if k < key current_node then
+        (delete_aux (left current_node) k t)
+      else if key current_node < k then
+        (delete_aux (right current_node) k t)
+      else begin
+        let p = parent current_node in
+        if left current_node = Leaf then
+          (if p == Leaf then
+            let (_, _, r) = expose current_node in
+            t.root <- r
+          else if right p == current_node then
+            set_child p Right (right current_node)
+          else
+            set_child p Left (right current_node))
+        else if right current_node = Leaf then
+          (if p == Leaf then
+            let (l, _, _) = expose current_node in
+            t.root <- l
+          else if right p == current_node then
+            set_child p Right (left current_node)
+          else
+            set_child p Left (left current_node))
+        else
+          let min_node = find_min_node (right current_node) in
+          match current_node with
+          | Leaf -> failwith "impossible error"
+          | Node n' ->
+            n'.key <- key min_node;
+            n'.tval <- tval min_node;
+            delete_aux n'.right (key min_node) t
+      end *)
 
     (* let rec get_black_height_aux acc n =
       match n with
