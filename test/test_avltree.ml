@@ -113,7 +113,6 @@ Printf.printf "\nStarting deletion test for AVL...\n";;
 let at3 = IntAvltree.Sequential.new_tree ();;
 let ref_array_3 = Array.make max_key @@ -1;;
 let st = Sys.time();;
-let at3 = IntAvltree.Sequential.new_tree ();;
 let num_inserted = ref 0;;
 let () = for _ = 1 to max_key do
   let k = Random.full_int max_key in
@@ -134,7 +133,7 @@ Printf.printf "Removed %d elements from AVL tree\n" !num_removed;;
 Printf.printf "Deletion time for AVL tree: %fs\n" (Sys.time() -. st);;
 
 let st = Sys.time();;
-assert (IntAvltree.Sequential.verify_height_invariant at.root);;
+assert (IntAvltree.Sequential.verify_height_invariant at3.root);;
 let num_found = ref 0;;
 let () = for i = 0 to max_key - 1 do
   if ref_array_3.(i) != -1 then
