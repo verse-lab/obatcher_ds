@@ -165,7 +165,7 @@ module Make (V: Map.OrderedType) = struct
       match n with
       | Leaf -> None
       | Node n' ->
-        if k == n'.key then Some n'.nval
+        if k = n'.key then Some n'.nval
         else if k > n'.key then search_aux k n'.right
         else search_aux k n'.left
 
@@ -174,7 +174,7 @@ module Make (V: Map.OrderedType) = struct
     let rotate_left x t =
       let y = right x in
       set_child x Right (left y);
-      if left y != Leaf then set_parent (left y) x;
+      if left y <> Leaf then set_parent (left y) x;
       set_parent y (parent x);
       if parent x = Leaf then t.root <- y
       else if x == left @@ parent x then set_child (parent x) Left y
@@ -186,7 +186,7 @@ module Make (V: Map.OrderedType) = struct
     let rotate_right x t =
       let y = left x in
       set_child x Left (right y);
-      if right y != Leaf then set_parent (right y) x;
+      if right y <> Leaf then set_parent (right y) x;
       set_parent y (parent x);
       if parent x = Leaf then t.root <- y
       else if x == right @@ parent x then set_child (parent x) Right y
@@ -199,23 +199,23 @@ module Make (V: Map.OrderedType) = struct
       let () = set_height n @@ max (height (left n)) (height (right n)) + 1 in
       let balance = get_balance n in
       if balance > 1 then
-        if height (left (left n)) > height (right (left n)) then
+        if height (left (left n)) >= height (right (left n)) then
           rotate_right n t
         else (rotate_left (left n) t; rotate_right n t)
       else if balance < -1 then
-        if height (right (right n)) > height (left (right n)) then
+        if height (right (right n)) >= height (left (right n)) then
           rotate_left n t
         else (rotate_right (right n) t; rotate_left n t)
 
     let rec insert_aux new_node current_node t =
-      if key new_node == key current_node then ()
+      if key new_node = key current_node then ()
       else begin
         let () = if key new_node < key current_node then
-          if left current_node == Leaf then
+          if left current_node = Leaf then
             set_child current_node Left new_node
           else insert_aux new_node (left current_node) t
         else
-          if right current_node == Leaf then
+          if right current_node = Leaf then
             set_child current_node Right new_node
           else insert_aux new_node (right current_node) t in
         rebalance_node current_node t
@@ -223,7 +223,7 @@ module Make (V: Map.OrderedType) = struct
 
     let insert k v t =
       let new_node = new_node k v in
-      if t.root == Leaf then t.root <- new_node
+      if t.root = Leaf then t.root <- new_node
       else insert_aux new_node t.root t
 
     let rec find_min_node n =
@@ -234,7 +234,7 @@ module Make (V: Map.OrderedType) = struct
         else find_min_node (n'.left)
 
     let rec delete_aux current_node k t =
-      if current_node == Leaf then ()
+      if current_node = Leaf then ()
       else if k < key current_node then
         (delete_aux (left current_node) k t; rebalance_node current_node t)
       else if key current_node < k then
@@ -265,11 +265,11 @@ module Make (V: Map.OrderedType) = struct
             n'.key <- key min_node;
             n'.nval <- nval min_node;
             delete_aux n'.right (key min_node) t;
-            rebalance_node current_node t
+            rebalance_node current_node t;
       end
 
     let delete k t =
-      if t.root == Leaf then ()
+      if t.root = Leaf then ()
       else delete_aux t.root k t
 
     let rec join_right tl k tr =
@@ -346,7 +346,9 @@ module Make (V: Map.OrderedType) = struct
       | Leaf -> true
       | Node n' ->
         let height_diff = abs @@ height n'.left - height n'.right in
-        height_diff <= 1 && verify_height_invariant n'.left && verify_height_invariant n'.right
+        (* if height_diff > 1 then Printf.printf "Height diff: %d, heights: %d, %d\n" height_diff (height n'.left) (height n'.right); *)
+        height_diff <= 1 && 
+        verify_height_invariant n'.left && verify_height_invariant n'.right
   end
 
   type 'a t = 'a Sequential.tree
