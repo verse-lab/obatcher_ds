@@ -599,9 +599,9 @@ module Make (V: Map.OrderedType) = struct
       while !s1 > rstart && fst inserts.(!s1 - 1) = k do s1 := !s1 - 1 done;
       while fst inserts.(!s2) = k && !s2 >= rstop do s2 := !s2 + 1 done;
       let l = Domainslib.Task.async pool 
-        (fun () -> par_insert_aux_1 op_threshold height_threshold ~pool lt ~inserts ~range:(rstart, split)) in
+        (fun () -> par_insert_aux_1 op_threshold height_threshold ~pool lt ~inserts ~range:(rstart, !s1)) in
       let r = Domainslib.Task.async pool
-        (fun () -> par_insert_aux_1 op_threshold height_threshold ~pool rt ~inserts ~range:(split, rstop)) in
+        (fun () -> par_insert_aux_1 op_threshold height_threshold ~pool rt ~inserts ~range:(!s2, rstop)) in
       Domainslib.Task.await pool l; Domainslib.Task.await pool r;
       let nt = Sequential.join lt mn rt in
       t.root <- nt.root
