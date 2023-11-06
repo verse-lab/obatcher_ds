@@ -41,10 +41,15 @@ let () =
   Hashtbl.add benchmarks "rbtree-batched" (module Rbtree.Batched);
   Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbtree.ExplicitlyBatched);
 
-  Hashtbl.add benchmarks "avltree-sequential" (module Avltree.Sequential);
+  (* Hashtbl.add benchmarks "avltree-sequential" (module Avltree.Sequential);
   Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltree.CoarseGrained);
   Hashtbl.add benchmarks "avltree-batched" (module Avltree.Batched);
-  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltree.ExplicitlyBatched);
+  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltree.ExplicitlyBatched); *)
+
+  Hashtbl.add benchmarks "avltree-sequential" (module Avltreefunctor.Sequential);
+  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltreefunctor.CoarseGrained);
+  Hashtbl.add benchmarks "avltree-batched" (module Avltreefunctor.Batched);
+  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltreefunctor.ExplicitlyBatched);
 
   Hashtbl.add benchmarks "treap-sequential" (module Treap.Sequential);
   Hashtbl.add benchmarks "treap-coarse-grained" (module Treap.CoarseGrained);
