@@ -25,7 +25,7 @@ let treap_search_type = ref 2
 module Make (V: Map.OrderedType) = struct
   module Sequential = struct
     type 'a node = Leaf | Node of {
-      key: V.t;
+      mutable key: V.t;
       mutable nval: 'a;
       mutable priority: int;
       mutable parent: 'a node;
@@ -189,6 +189,51 @@ module Make (V: Map.OrderedType) = struct
       if t.root == Leaf then t.root <- new_node
       else insert_aux new_node t.root t
 
+    let rec find_min_node n =
+      match n with
+      | Leaf -> failwith "Find min node function: n is a leaf"
+      | Node n' ->
+        if n'.left == Leaf then n
+        else find_min_node (n'.left)
+
+    let rec delete_aux current_node k t =
+      if current_node == Leaf then ()
+      else if k < key current_node then
+        delete_aux (left current_node) k t
+      else if key current_node < k then
+        delete_aux (right current_node) k t
+      else begin
+        let p = parent current_node in
+        if left current_node = Leaf then
+          (if p == Leaf then
+            let (_, _, r) = expose current_node in
+            t.root <- r
+          else if right p == current_node then
+            set_child p Right (right current_node)
+          else
+            set_child p Left (right current_node))
+        else if right current_node = Leaf then
+          (if p == Leaf then
+            let (l, _, _) = expose current_node in
+            t.root <- l
+          else if right p == current_node then
+            set_child p Right (left current_node)
+          else
+            set_child p Left (left current_node))
+        else
+          let min_node = find_min_node (right current_node) in
+          match current_node with
+          | Leaf -> failwith "impossible error"
+          | Node n' ->
+            n'.key <- key min_node;
+            n'.nval <- nval min_node;
+            delete_aux n'.right (key min_node) t
+      end
+  
+      let delete k t =
+        if t.root == Leaf then ()
+        else delete_aux t.root k t
+
     let rec join tl n tr =
       if priority n >= priority tl.root && priority n >= priority tr.root then
         (merge_three_nodes tl.root n tr.root; {root = n})
@@ -282,10 +327,11 @@ module Make (V: Map.OrderedType) = struct
           s2 := !s2 + 1
         done;
       end;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_4 op_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_4 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_4 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (* Split the search operations only *)
   let rec par_search_aux_1 threshold pool t ~keys ~range:(rstart, rstop) =
@@ -322,10 +368,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) @@ Some nval;
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_2 op_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_2 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_2 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   (** Use linear search only to traverse operations array *)
   let rec par_search_aux_3 op_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -345,10 +392,11 @@ module Make (V: Map.OrderedType) = struct
         snd keys.(!s2) (Some nval);
         s2 := !s2 + 1
       done;
-      let _ = Domainslib.Task.async pool 
+      let l = Domainslib.Task.async pool 
         (fun () -> par_search_aux_3 op_threshold ~pool (Sequential.left node) ~keys ~range:(rstart, !s1)) in
-      let _ = Domainslib.Task.async pool
-        (fun () -> par_search_aux_3 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in ()
+      let r = Domainslib.Task.async pool
+        (fun () -> par_search_aux_3 op_threshold ~pool (Sequential.right node) ~keys ~range:(!s2, rstop)) in
+      Domainslib.Task.await pool l; Domainslib.Task.await pool r
 
   let par_search ?search_threshold ~pool (t: 'a t) keys =
     let search_threshold = match search_threshold with Some t -> t | None -> !treap_search_sequential_threshold in
