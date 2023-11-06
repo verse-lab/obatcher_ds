@@ -395,17 +395,24 @@ module Make (V: Map.OrderedType) = struct
         (set_colour n Red; merge_three_nodes tl.root n tr.root; {root = n})
       else (set_colour n Black; merge_three_nodes tl.root n tr.root; {root = n})
 
-      let rec split t k =
-        if t.root = Leaf then ({root = Leaf}, Leaf, {root = Leaf})
+    let rec split t k =
+      if t.root = Leaf then ({root = Leaf}, Leaf, {root = Leaf})
+      else
+        let (l, m, r) = expose t.root in
+        if k = key m then ({root = l}, m, {root = r})
+        else if k < key m then
+          let (ll, b, lr) = split {root = l} k in
+          (ll, b, join lr m {root = r})
         else
-          let (l, m, r) = expose t.root in
-          if k = key m then ({root = l}, m, {root = r})
-          else if k < key m then
-            let (ll, b, lr) = split {root = l} k in
-            (ll, b, join lr m {root = r})
-          else
-            let (rl, b, rr) = split {root = r} k in
-            (join {root = l} m rl, b, rr)
+          let (rl, b, rr) = split {root = r} k in
+          (join {root = l} m rl, b, rr)
+
+    (* Inefficient delete function, based on splitting and rejoining the trees *)
+    let delete k t =
+      let (l, _, r) = split t k in
+      let rmin = find_min_node r.root in
+      let (_, mn, r') = split r (key rmin) in
+      t.root <- (join l mn r').root
 
     let rec verify_black_depth n = 
       match n with
