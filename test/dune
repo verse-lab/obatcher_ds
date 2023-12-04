@@ -12,3 +12,13 @@
  (libraries obatcher_ds)
  (name test_treap)
  (modules test_treap))
+
+(test
+ (libraries obatcher_ds)
+ (name test_orderedlinkedlist)
+ (modules test_orderedlinkedlist))
+
+; (test
+;  (libraries obatcher_ds)
+;  (name test_avltree_par)
+;  (modules test_avltree_par))

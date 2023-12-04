@@ -44,17 +44,17 @@ AVL_OPS := 1_000_000
 AVL_SEARCH := 0
 avltree : avltree.ml
 	printf "Avltree-Sequential\n"
-	$(B) avltree-sequential --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP)
+	$(B) avltree-sequential --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
 
 	printf "Avltree-Batched\n"
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 2
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 3
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 4
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 5
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 6
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 7
-	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 8
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 2 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 3 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 4 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 5 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
+	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
 
 avltree-batched :
 	$(B) avltree-batched --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
@@ -128,3 +128,20 @@ treap-batched :
 
 treap-validate :
 	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 2 -T
+
+LL_PRESET := 20_000
+LL_OPS := 10_000
+LL_SEARCH := 0
+linkedlist : orderedlinkedlist.ml
+	printf "Linkedlist-Sequential\n"
+	$(B) linkedlist-sequential --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
+
+	printf "Linkedlist-Batched\n"
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 2 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 3 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 4 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 5 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
+	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T

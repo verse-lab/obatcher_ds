@@ -1,6 +1,6 @@
 [@@@warning "-32-26"]
 let avltree_insert_sequential_threshold = ref 1000
-let avltree_insert_height_threshold = ref 1
+let avltree_insert_height_threshold = ref 10
 let avltree_search_sequential_threshold = ref 50
 let avltree_search_height_threshold = ref 4
 let avltree_binary_search_threshold = ref 32
