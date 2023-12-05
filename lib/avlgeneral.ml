@@ -343,7 +343,7 @@ module Prebatch (V: Map.OrderedType) = struct
     for i = Array.length k_arr - 1 to 0 do
       let (lt, rt) = split_two !acc k_arr.(i) in
       acc := lt; t_list := rt :: !t_list;
-    done; t_list := !acc :: !t_list; Array.of_list !t_list
+    done; Array.of_list @@ !acc :: !t_list
 
   let set_root (n: 'a S.node) (t: 'a S.t) = t.root <- n
 

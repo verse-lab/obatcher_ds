@@ -3,7 +3,7 @@
    - Is a key value store where each key is unique and associated with one value.
    - The key must be a total order.
    - Each node can have zero, one, or multiple sorted key value pairs.
-   - Each node can have zero, one, or multiple sorted children. (specify)
+   - Each node can have zero, one, or multiple sorted children.
    - Each node must be a root node of a valid sub-data structure.
    - The top level node must be wrapped in a `'a t` wrapper to allow for
    in-place data structure updates.
@@ -14,6 +14,8 @@
    - The minimum and/or maximum number of children per node.
    - Any further conditions on joinable/splittable trees.
    - Any further metadata to be stored in nodes or the wrapper. *)
+
+   [@@@warning "-32-26-27"]
 
 module type Sequential = sig
 
@@ -94,7 +96,7 @@ module Make (P : Prebatch) = struct
     (* | Delete : S.kt -> ('a, unit) op *)
   type 'a wrapped_op = Mk : ('a, 'b) op * ('b -> unit) -> 'a wrapped_op
 
-  let insert_op_threshold = ref 1000
+  let insert_op_threshold = ref 500000
   let search_op_threshold = ref 50
   let size_factor_threshold = ref 5
   let search_type = ref 1
@@ -199,20 +201,27 @@ module Make (P : Prebatch) = struct
     if n <= 0 then ()
     else if n <= op_threshold then
       for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
-    else
+    else begin
       let split_ranges = ref [] and split_points = ref [] and start = ref rstart in
-      let prev_split = ref rstart in
       while !start < rstop do
-        let split = !prev_split + op_threshold in
-        if split < rstop then split_ranges := (!prev_split, split) :: !split_ranges;
-        split_points := fst inserts.(split) :: !split_points;
+        let split = !start + op_threshold in
+        if split < rstop then (
+          assert (split - !start <= op_threshold);
+          split_ranges := (!start, split) :: !split_ranges;
+          split_points := fst inserts.(split) :: !split_points)
+        else split_ranges := (!start, rstop) :: !split_ranges;
         start := split
-      done; let split_points_arr = Array.of_list (List.rev !split_points) in
+      done;
+      let split_points_arr = Array.of_list (List.rev !split_points) in
       let split_ranges_arr = Array.of_list (List.rev !split_ranges) in
       let ts = P.split split_points_arr t in
-      Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length split_ranges_arr - 1) ~chunk_size:1
+      assert (Array.length ts = Array.length split_points_arr + 1);
+      assert (Array.length ts = Array.length split_ranges_arr);
+      (* Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length split_ranges_arr - 1) ~chunk_size:1
         ~body:(fun i -> let (rstart, rstop) = split_ranges_arr.(i) in
-          for j = rstart to rstop - 1 do let (k, v) = inserts.(j) in S.insert k v ts.(i) done)
+          for j = rstart to rstop - 1 do let (k, v) = inserts.(j) in S.insert k v ts.(i) done);
+      P.set_root (P.peek_root @@ P.join ts) t *)
+    end
 
   (** Take a peek at the keys at the root node, and split the operations array
       accordingly before breaking up the node into its children and sending the
