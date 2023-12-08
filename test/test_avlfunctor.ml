@@ -2,9 +2,9 @@ module IntAvltree = Obatcher_ds.Avlgeneral.Sequential(Int);;
 module IntAvltreePrebatch = Obatcher_ds.Avlgeneral.Prebatch(Int);;
 module IntAvltreeSplitJoin = Obatcher_ds.Splitjoin.Make(IntAvltreePrebatch);;
 
-let num_nodes = 1000000;;
+let num_nodes = 10000000;;
 let max_key = num_nodes;;
-let num_pivots = 100;;
+let num_pivots = 10000;;
 
 Printf.printf "\nStarting split test for AVL trees...\n";;
 
@@ -26,6 +26,7 @@ assert (IntAvltree.verify_height_invariant at.root);;
 let () = for i = 0 to max_key - 1 do
   if ref_array_2.(i) != -1 then
     assert (IntAvltree.search i at = Some ref_array_2.(i))
+  else assert (IntAvltree.search i at = None)
 done;;
 Printf.printf "Verification time for AVL tree: %fs\n" (Sys.time() -. st);;
 
@@ -42,9 +43,11 @@ assert(Array.length split_arr = num_pivots + 1);;
 let cur_pivot_idx = ref 0;;
 let st = Sys.time();;
 let () = for i = 0 to max_key - 1 do
-  if !cur_pivot_idx < Array.length pivot_arr && pivot_arr.(!cur_pivot_idx) = i then
+  while !cur_pivot_idx < Array.length pivot_arr && pivot_arr.(!cur_pivot_idx) = i do
     cur_pivot_idx := !cur_pivot_idx + 1;
+  done;
   if ref_array_2.(i) != -1 then
     assert (IntAvltree.search i split_arr.(!cur_pivot_idx) = Some ref_array_2.(i))
+  else assert (IntAvltree.search i split_arr.(!cur_pivot_idx) = None)
 done;;
 Printf.printf "Verification time for split AVL tree: %fs\n" (Sys.time() -. st);;
