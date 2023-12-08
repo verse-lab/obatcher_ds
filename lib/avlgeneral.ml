@@ -334,13 +334,13 @@ module Prebatch (V: Map.OrderedType) = struct
 
   let join (t_arr: 'a S.t array) =
     let acc = ref t_arr.(0) in
-    for i = 0 to Array.length t_arr - 2 do
-      acc := join_two !acc t_arr.(i + 1);
+    for i = 1 to Array.length t_arr - 1 do
+      acc := join_two !acc t_arr.(i);
     done; !acc
 
   let split k_arr t =
     let acc = ref t and t_list = ref [] in
-    for i = Array.length k_arr - 1 to 0 do
+    for i = Array.length k_arr - 1 downto 0 do
       let (lt, rt) = split_two !acc k_arr.(i) in
       acc := lt; t_list := rt :: !t_list;
     done; Array.of_list @@ !acc :: !t_list

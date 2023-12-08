@@ -18,6 +18,11 @@
  (name test_orderedlinkedlist)
  (modules test_orderedlinkedlist))
 
+(test
+ (libraries obatcher_ds)
+ (name test_avlfunctor)
+ (modules test_avlfunctor))
+
 ; (test
 ;  (libraries obatcher_ds)
 ;  (name test_avltree_par)

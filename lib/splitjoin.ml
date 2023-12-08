@@ -15,12 +15,13 @@
    - Any further conditions on joinable/splittable trees.
    - Any further metadata to be stored in nodes or the wrapper. *)
 
-   [@@@warning "-32-26-27"]
+[@@@warning "-32-26-27"]
 
 module type Sequential = sig
 
   (* Types for sequential implementation *)
   type kt       (* Key type *)
+  (* Declare type in Prebatch type signature *)
   type 'a node  (* 'a is the polymorphic value type *)
   type 'a t
 
@@ -58,6 +59,7 @@ module type Prebatch = sig
   (** [join arr] joins all data structures in [arr] together. [arr] must be sorted and
       the data structures in [arr] must not have overlapping ranges of keys. *)
 
+  (* Separate module with only split_two? *)
   val split : S.kt array -> 'a S.t -> 'a S.t array
   (** [split arr t] splits [t] into an array of disjoint data structures. For each
       key [i] in sorted [arr], we would have 2 data structures where one has all its node
@@ -96,7 +98,7 @@ module Make (P : Prebatch) = struct
     (* | Delete : S.kt -> ('a, unit) op *)
   type 'a wrapped_op = Mk : ('a, 'b) op * ('b -> unit) -> 'a wrapped_op
 
-  let insert_op_threshold = ref 500000
+  let insert_op_threshold = ref 1000
   let search_op_threshold = ref 50
   let size_factor_threshold = ref 5
   let search_type = ref 1
@@ -202,25 +204,18 @@ module Make (P : Prebatch) = struct
     else if n <= op_threshold then
       for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
-      let split_ranges = ref [] and split_points = ref [] and start = ref rstart in
-      while !start < rstop do
-        let split = !start + op_threshold in
-        if split < rstop then (
-          assert (split - !start <= op_threshold);
-          split_ranges := (!start, split) :: !split_ranges;
-          split_points := fst inserts.(split) :: !split_points)
-        else split_ranges := (!start, rstop) :: !split_ranges;
-        start := split
-      done;
-      let split_points_arr = Array.of_list (List.rev !split_points) in
-      let split_ranges_arr = Array.of_list (List.rev !split_ranges) in
-      let ts = P.split split_points_arr t in
-      assert (Array.length ts = Array.length split_points_arr + 1);
-      assert (Array.length ts = Array.length split_ranges_arr);
-      (* Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length split_ranges_arr - 1) ~chunk_size:1
-        ~body:(fun i -> let (rstart, rstop) = split_ranges_arr.(i) in
+      let num_par = n / op_threshold + if n mod op_threshold > 0 then 1 else 0 in
+      let split_pts = Array.init (num_par - 1) (fun i -> fst inserts.(rstart + (i + 1) * op_threshold)) in
+      let split_ranges = Array.init num_par
+        (fun i -> (rstart + i * op_threshold, min rstop (rstart + (i + 1) * op_threshold))) in
+      (* assert (Array.length split_pts = Array.length split_ranges - 1); *)
+      let ts = P.split split_pts t in
+      assert (Array.length ts = Array.length split_pts + 1);
+      assert (Array.length ts = Array.length split_ranges);
+      Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length split_ranges - 1) ~chunk_size:1
+        ~body:(fun i -> let (rstart, rstop) = split_ranges.(i) in
           for j = rstart to rstop - 1 do let (k, v) = inserts.(j) in S.insert k v ts.(i) done);
-      P.set_root (P.peek_root @@ P.join ts) t *)
+      P.set_root (P.peek_root @@ P.join ts) t
     end
 
   (** Take a peek at the keys at the root node, and split the operations array

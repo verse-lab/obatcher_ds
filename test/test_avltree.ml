@@ -62,19 +62,19 @@ let at = IntAvltree.Sequential.new_tree ();;
 let ref_array_2 = Array.make max_key @@ -1;;
 
 let st = Sys.time();;
-let () = for _ = 1 to num_nodes / 2 do
-  let k = Random.full_int (max_key / 2) in
-  let v = Random.full_int (max_key / 2) in
+let () = for _ = 1 to num_nodes do
+  let k = Random.full_int max_key in
+  let v = Random.full_int max_key in
   IntAvltree.Sequential.insert k v at;
   if ref_array_2.(k) == -1 then ref_array_2.(k) <- v
 done;;
 
-let () = for _ = 1 to num_nodes / 2 do
+(* let () = for _ = 1 to num_nodes / 2 do
   let k = Random.full_int (max_key / 2) + (max_key / 2)in
   let v = Random.full_int (max_key / 2) + (max_key / 2)in
   IntAvltree.Sequential.insert k v at;
   if ref_array_2.(k) == -1 then ref_array_2.(k) <- v
-done;;
+done;; *)
 Printf.printf "Insertion time for AVL tree: %fs\n" (Sys.time() -. st);;
 
 let st = Sys.time();;
