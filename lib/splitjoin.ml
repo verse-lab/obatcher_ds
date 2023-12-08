@@ -98,14 +98,13 @@ module Make (P : Prebatch) = struct
     (* | Delete : S.kt -> ('a, unit) op *)
   type 'a wrapped_op = Mk : ('a, 'b) op * ('b -> unit) -> 'a wrapped_op
 
-  let insert_op_threshold = ref 1000
-  let search_op_threshold = ref 50
+  let insert_op_threshold = ref 500
+  let search_op_threshold = ref 1000
   let size_factor_threshold = ref 5
   let search_type = ref 1
   let insert_type = ref 0
 
   let compare = P.compare
-  (* let compare (a: S.kt) (b: S.kt) = if a < b then -1 else if a > b then 1 else 0 *)
 
   let init () = S.init ()
 
@@ -126,6 +125,15 @@ module Make (P : Prebatch) = struct
     else if fst arr.(!left) >= target then !left
     else 0
 
+  (** Helper function to remove duplicated insert operations (since effectively only one
+      can take effect at the end, in any order thanks to linearisation). *)
+  let deduplicate ops: (S.kt * 'a) array =
+    let new_ops_list = ref [] in
+    for i = Array.length ops - 1 downto 0 do
+      if i = 0 then new_ops_list := ops.(i) :: !new_ops_list
+      else if fst ops.(i) <> fst ops.(i - 1) then new_ops_list := ops.(i) :: !new_ops_list
+    done; Array.of_list !new_ops_list
+
   (** Naive batched search operations. We simply split the search operations
       array into equal sub-arrays, and process each sub-array in parallel by
       calling the search function for each search operation at the beginning
@@ -139,6 +147,26 @@ module Make (P : Prebatch) = struct
         ~body:(fun i -> par_search_aux_1 threshold pool node ~keys
           ~range:(rstart + i * threshold, min rstop @@ rstart + (i + 1) * threshold));
     else for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
+
+  (* let par_search_aux_1 op_threshold pool (t: 'a t) ~keys ~range:(rstart, rstop) =
+    let n = rstop - rstart in
+    if n <= 0 then ()
+    else if n <= op_threshold then
+      for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ S.search k t done
+    else begin
+      let num_par = n / op_threshold + if n mod op_threshold > 0 then 1 else 0 in
+      let split_pts = Array.init (num_par - 1) (fun i -> fst keys.(rstart + (i + 1) * op_threshold)) in
+      let split_ranges = Array.init num_par
+        (fun i -> (rstart + i * op_threshold, min rstop (rstart + (i + 1) * op_threshold))) in
+      (* assert (Array.length split_pts = Array.length split_ranges - 1); *)
+      let ts = P.split split_pts t in
+      assert (Array.length ts = Array.length split_pts + 1);
+      assert (Array.length ts = Array.length split_ranges);
+      Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length split_ranges - 1) ~chunk_size:1
+        ~body:(fun i -> let (rstart, rstop) = split_ranges.(i) in
+          for j = rstart to rstop - 1 do let (k, kont) = keys.(j) in kont @@ S.search k ts.(i) done);
+      P.set_root (P.peek_root @@ P.join ts) t
+    end *)
 
   (** Batched search operations with linear search in sorted search operations array. *)
   let rec par_search_aux_2 op_threshold size_factor_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -188,6 +216,9 @@ module Make (P : Prebatch) = struct
   let par_search ?search_threshold ?tree_threshold ~pool (t: 'a t) keys =
     let search_threshold = match search_threshold with Some t -> t | None -> !search_op_threshold in
     let tree_threshold = match tree_threshold with Some t -> t | None -> !size_factor_threshold in
+    (match !search_type with
+    | 0 | 1 -> ()
+    | _ -> Sort.sort pool ~compare:(fun (k, _) (k', _) -> compare k k') keys);
     match !search_type with
     | 0 -> Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length keys - 1) ~body:(fun i ->
       let (k,kont) = keys.(i) in
@@ -276,13 +307,6 @@ module Make (P : Prebatch) = struct
     | 2 -> par_insert_aux_2 insert_threshold size_factor_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | _ -> failwith "Invalid insert type"
 
-  let deduplicate ops: (S.kt * 'a) array =
-    let new_ops_list = ref [] in
-    for i = Array.length ops - 1 downto 0 do
-      if i = 0 then new_ops_list := ops.(i) :: !new_ops_list
-      else if fst ops.(i) <> fst ops.(i - 1) then new_ops_list := ops.(i) :: !new_ops_list
-    done; Array.of_list !new_ops_list
-
   let run (type a) (t: a t) (pool: Domainslib.Task.pool) (ops: a wrapped_op array) =
     let searches: (S.kt * (a option -> unit)) list ref = ref [] in
     let inserts: (S.kt * a) list ref = ref [] in
@@ -292,10 +316,10 @@ module Make (P : Prebatch) = struct
     ) ops;
 
     (* Initiate parallel searches *)
+    (* Do NOT deduplicate search queries *)
     let searches = Array.of_list !searches in
     if Array.length searches > 0 then
-      Sort.sort pool ~compare:(fun (k, _) (k', _) -> compare k k') searches;
-      par_search ~pool t @@ deduplicate searches;
+      par_search ~pool t searches;
 
     (* Initiate parallel inserts *)
     let inserts = Array.of_list !inserts in
