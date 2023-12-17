@@ -40,8 +40,8 @@ btree-batched :
 	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
 
 AVL_PRESET := 2_000_000
-AVL_OPS := 0
-AVL_SEARCH := 2_000_000
+AVL_OPS := 1_000_000
+AVL_SEARCH := 0
 avltree : avltree.ml
 	printf "Avltree-Sequential\n"
 	$(B) avltree-sequential --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
