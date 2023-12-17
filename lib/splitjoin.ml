@@ -215,7 +215,7 @@ module Make (P : Prebatch) = struct
       let ranges_arr = Array.of_list !ranges in
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges_arr - 1) ~chunk_size:1
         ~body:(fun i -> let (rstart, rstop) = ranges_arr.(i) in
-          par_search_aux_2 op_threshold size_factor_threshold ~pool nodes.(i) ~keys ~range:(rstart, rstop))
+          par_search_aux_3 op_threshold size_factor_threshold ~pool nodes.(i) ~keys ~range:(rstart, rstop))
 
   (** Batched search operations with binary search in sorted ops array. *)
   let rec par_search_aux_4 op_threshold size_factor_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -237,7 +237,7 @@ module Make (P : Prebatch) = struct
       let ranges_arr = Array.of_list !ranges in
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges_arr - 1) ~chunk_size:1
         ~body:(fun i -> let (rstart, rstop) = ranges_arr.(i) in
-          par_search_aux_3 op_threshold size_factor_threshold ~pool nodes.(i) ~keys ~range:(rstart, rstop))
+          par_search_aux_4 op_threshold size_factor_threshold ~pool nodes.(i) ~keys ~range:(rstart, rstop))
 
   let par_search ?search_threshold ?tree_threshold ~pool (t: 'a t) keys =
     let search_threshold = match search_threshold with Some t -> t | None -> !search_op_threshold in
