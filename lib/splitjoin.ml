@@ -102,7 +102,7 @@ module Make (P : Prebatch) = struct
   let search_op_threshold = ref 1000
   let size_factor_threshold = ref 5
   let search_type = ref 2
-  let insert_type = ref 1
+  let insert_type = ref 3
 
   let compare = P.compare
 
@@ -266,8 +266,6 @@ module Make (P : Prebatch) = struct
       let split_ranges = Array.init num_par
         (fun i -> (rstart + i * op_threshold, min rstop (rstart + (i + 1) * op_threshold))) in
       let ts = P.split split_pts t in
-      assert (Array.length ts = Array.length split_pts + 1);
-      assert (Array.length ts = Array.length split_ranges);
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length split_ranges - 1) ~chunk_size:1
         ~body:(fun i -> let (rstart, rstop) = split_ranges.(i) in
           for j = rstart to rstop - 1 do let (k, v) = inserts.(j) in S.insert k v ts.(i) done);
@@ -283,8 +281,6 @@ module Make (P : Prebatch) = struct
     else if n <= op_threshold || P.size_factor (P.peek_root t) <= size_factor_threshold then
       for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
-      Sort.sort pool ~compare:(fun (k, _) (k', _) -> compare k k') inserts;
-      let inserts = deduplicate inserts in
       let (kv_arr, t_arr) = P.break_node (P.peek_root t) in
       let ranges = ref [] and prev_ptr = ref rstart and ptr = ref rstart in
       for i = 0 to Array.length kv_arr - 1 do
@@ -308,8 +304,6 @@ module Make (P : Prebatch) = struct
     else if n <= op_threshold || P.size_factor (P.peek_root t) <= size_factor_threshold then
       for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
-      Sort.sort pool ~compare:(fun (k, _) (k', _) -> compare k k') inserts;
-      let inserts = deduplicate inserts in
       let (kv_arr, t_arr) = P.break_node (P.peek_root t) in
       let ranges = ref [] and prev_ptr = ref rstart in
       for i = 0 to Array.length kv_arr - 1 do
@@ -350,10 +344,13 @@ module Make (P : Prebatch) = struct
   let par_insert ?insert_threshold ?size_factor_threshold_opt ~pool (t: 'a t) inserts =
     let insert_threshold = match insert_threshold with Some t -> t | None -> !insert_op_threshold in
     let size_factor_threshold = match size_factor_threshold_opt with Some t -> t | None -> !size_factor_threshold in
+    (match !insert_type with
+    | 3 -> ()
+    | _ -> Sort.sort pool ~compare:(fun (k, _) (k', _) -> compare k k') inserts);
     match !insert_type with
-    | 0 -> par_insert_aux_0 insert_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
-    | 1 -> par_insert_aux_1 insert_threshold size_factor_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
-    | 2 -> par_insert_aux_2 insert_threshold size_factor_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
+    | 0 -> par_insert_aux_0 insert_threshold ~pool t ~inserts:(deduplicate inserts) ~range:(0, Array.length inserts)
+    | 1 -> par_insert_aux_1 insert_threshold size_factor_threshold ~pool t ~inserts:(deduplicate inserts) ~range:(0, Array.length inserts)
+    | 2 -> par_insert_aux_2 insert_threshold size_factor_threshold ~pool t ~inserts:(deduplicate inserts) ~range:(0, Array.length inserts)
     | 3 -> par_insert_aux_3 insert_threshold size_factor_threshold ~pool t ~inserts ~range:(0, Array.length inserts)
     | _ -> failwith "Invalid insert type"
 
