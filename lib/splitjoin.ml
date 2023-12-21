@@ -102,7 +102,7 @@ module Make (P : Prebatch) = struct
   let search_op_threshold = ref 1000
   let size_factor_threshold = ref 5
   let search_type = ref 0
-  let insert_type = ref 0
+  let insert_type = ref 1
 
   let compare = P.compare
 
@@ -167,17 +167,17 @@ module Make (P : Prebatch) = struct
     aux 0 (Array.length pivot_list) lo hi
 
   (** Same as [partition_seq], but parallelised. *)
-  let rec partition_par pool res_list arr pivot_list pstart pstop lo hi =
-    if pstop - pstart <= 0 then ()
-    else if pstop - pstart = 1 then res_list.(pstart) <- partition_two arr pivot_list.(pstart) lo hi
-    else
-      let pmid = pstart + (pstop - pstart) / 2 in
-      res_list.(pmid) <- partition_two arr pivot_list.(pmid) lo hi;
-      let l = Domainslib.Task.async pool
-        (fun () -> partition_par pool res_list arr pivot_list pstart pmid lo res_list.(pmid)) in
-      let r = Domainslib.Task.async pool
-        (fun () -> partition_par pool res_list arr pivot_list (pmid + 1) pstop res_list.(pmid) hi) in
-      Domainslib.Task.await pool l; Domainslib.Task.await pool r
+  let partition_par pool res_list arr pivot_list lo hi =
+    let rec aux pstart pstop lo hi =
+      if pstop - pstart <= 0 then ()
+      else if pstop - pstart = 1 then res_list.(pstart) <- partition_two arr pivot_list.(pstart) lo hi
+      else
+        let pmid = pstart + (pstop - pstart) / 2 in
+        res_list.(pmid) <- partition_two arr pivot_list.(pmid) lo hi;
+        let l = Domainslib.Task.async pool (fun () -> aux pstart pmid lo res_list.(pmid)) in
+        let r = Domainslib.Task.async pool (fun () -> aux (pmid + 1) pstop res_list.(pmid) hi) in
+        Domainslib.Task.await pool l; Domainslib.Task.await pool r in
+    aux 0 (Array.length pivot_list) lo hi
 
   (** Naive batched search operations. We simply split the search operations
       array into equal sub-arrays, and process each sub-array in parallel by
@@ -305,7 +305,7 @@ module Make (P : Prebatch) = struct
       let pivots_arr = Array.init num_par (fun i -> fst inserts.(i)) in   (* Assume that the inserts are random *)
       Array.sort compare pivots_arr;  (* Single-threaded sorting of pivots *)
       let npivots = Array.make (Array.length pivots_arr) 0 in
-      partition_seq npivots inserts pivots_arr rstart rstop;
+      partition_par pool npivots inserts pivots_arr rstart rstop;
       let ranges = Array.init
         (Array.length pivots_arr + 1)
         (fun i ->
@@ -379,7 +379,7 @@ module Make (P : Prebatch) = struct
       let (kv_arr, t_arr) = P.break_node (P.peek_root t) in
       let pivots_arr = Array.init (Array.length kv_arr) (fun i -> fst kv_arr.(i)) in
       let npivots = Array.make (Array.length kv_arr) 0 in
-      partition_seq npivots inserts pivots_arr rstart rstop;
+      partition_par pool npivots inserts pivots_arr rstart rstop;
       let ranges = Array.init
         (Array.length kv_arr + 1)
         (fun i ->
