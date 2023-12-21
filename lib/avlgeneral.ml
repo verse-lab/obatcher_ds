@@ -144,7 +144,7 @@ module Sequential (V: Map.OrderedType) = struct
     set_height y @@ 1 + max (height @@ left y) (height @@ right y)
 
   let rebalance_node n t =
-    let () = set_height n @@ max (height (left n)) (height (right n)) + 1 in
+    set_height n @@ max (height (left n)) (height (right n)) + 1;
     let balance = get_balance n in
     if balance > 1 then
       if height (left (left n)) >= height (right (left n)) then

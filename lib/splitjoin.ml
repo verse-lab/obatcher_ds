@@ -340,9 +340,8 @@ module Make (P : Prebatch) = struct
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges_arr - 1) ~chunk_size:1
         ~body:(fun i ->
           if i > 0 then S.insert (fst kv_arr.(i - 1)) (snd kv_arr.(i - 1)) t_arr.(i);
-          let (rstart, rstop) = ranges_arr.(i) in begin
-          par_insert_aux_2 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop);
-        end);
+          let (rstart, rstop) = ranges_arr.(i) in
+          par_insert_aux_2 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop));
       P.set_root (P.peek_root @@ P.join t_arr) t
     end
 
@@ -364,9 +363,8 @@ module Make (P : Prebatch) = struct
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges_arr - 1) ~chunk_size:1
         ~body:(fun i ->
           if i > 0 then S.insert (fst kv_arr.(i - 1)) (snd kv_arr.(i - 1)) t_arr.(i);
-          let (rstart, rstop) = ranges_arr.(i) in begin
-          par_insert_aux_3 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop);
-        end);
+          let (rstart, rstop) = ranges_arr.(i) in
+          par_insert_aux_3 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop));
       P.set_root (P.peek_root @@ P.join t_arr) t
     end
 
@@ -389,9 +387,8 @@ module Make (P : Prebatch) = struct
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges - 1) ~chunk_size:1
         ~body:(fun i ->
           if i > 0 then S.insert (fst kv_arr.(i - 1)) (snd kv_arr.(i - 1)) t_arr.(i);
-          let (rstart, rstop) = ranges.(i) in begin
-          par_insert_aux_4 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop)
-        end);
+          let (rstart, rstop) = ranges.(i) in
+          par_insert_aux_4 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop));
       P.set_root (P.peek_root @@ P.join t_arr) t
     end
 
