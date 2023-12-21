@@ -104,17 +104,17 @@ TREAP_OPS := 1_000_000
 TREAP_SEARCH := 0
 treap : treap.ml
 	printf "treap-Sequential\n"
-	$(B) treap-sequential --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP)
+	$(B) treap-sequential --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -T
 
 	printf "treap-Batched\n"
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 2
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 3
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 4
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 5
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 6
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 7
-	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 8
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 2 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 3 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 4 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 5 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
+	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
 
 treap-batched :
 	$(B) treap-batched --init-count=$(TREAP_PRESET) --count=$(TREAP_OPS) --no-searches=$(TREAP_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
