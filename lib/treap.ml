@@ -230,9 +230,9 @@ module Make (V: Map.OrderedType) = struct
             delete_aux n'.right (key min_node) t
       end
   
-      let delete k t =
-        if t.root == Leaf then ()
-        else delete_aux t.root k t
+    let delete k t =
+      if t.root == Leaf then ()
+      else delete_aux t.root k t
 
     let rec join tl n tr =
       if priority n >= priority tl.root && priority n >= priority tr.root then

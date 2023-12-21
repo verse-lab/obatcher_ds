@@ -56,10 +56,15 @@ let () =
   Hashtbl.add benchmarks "linkedlist-batched" (module Orderedlinkedlist.Batched);
   Hashtbl.add benchmarks "linkedlist-explicitly-batched" (module Orderedlinkedlist.ExplicitlyBatched);
 
-  Hashtbl.add benchmarks "treap-sequential" (module Treap.Sequential);
+  (* Hashtbl.add benchmarks "treap-sequential" (module Treap.Sequential);
   Hashtbl.add benchmarks "treap-coarse-grained" (module Treap.CoarseGrained);
   Hashtbl.add benchmarks "treap-batched" (module Treap.Batched);
-  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treap.ExplicitlyBatched);
+  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treap.ExplicitlyBatched); *)
+
+  Hashtbl.add benchmarks "treap-sequential" (module Treapfunctor.Sequential);
+  Hashtbl.add benchmarks "treap-coarse-grained" (module Treapfunctor.CoarseGrained);
+  Hashtbl.add benchmarks "treap-batched" (module Treapfunctor.Batched);
+  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treapfunctor.ExplicitlyBatched);
 
   Hashtbl.add benchmarks "btree-sequential" (module Btree.Sequential);
   Hashtbl.add benchmarks "btree-coarse-grained" (module Btree.CoarseGrained);
