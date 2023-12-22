@@ -6,3 +6,6 @@ venv/
 
 # Python binaries
 __pycache__/
+
+# VSode settings
+.vscode/
