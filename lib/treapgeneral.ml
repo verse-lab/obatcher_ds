@@ -156,9 +156,9 @@ module Sequential (V: Map.OrderedType) = struct
 
   let rec rebalance n t =
     set_height n @@ max (height (left n)) (height (right n)) + 1;
-    if n = Leaf then () else if parent n = Leaf then () else
-    if priority n <= priority @@ parent n then () else
-    if priority n > priority @@ parent n then begin
+    if n = Leaf then () else if parent n = Leaf then ()
+    else if priority n <= priority @@ parent n then ()
+    else if priority n > priority @@ parent n then begin
       if n == left @@ parent n then rotate_right (parent n) t
       else rotate_left (parent n) t;
       rebalance n t  (* n is the "new" parent *)
