@@ -31,7 +31,7 @@ module type Sequential = sig
 
   val insert : kt -> 'a -> 'a t -> unit
 
-  val delete : kt -> 'a t -> unit
+  (* val delete : kt -> 'a t -> unit *)
 
 end
 
@@ -199,7 +199,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if P.size_factor node <= size_factor_threshold || n <= op_threshold then
-      Array.iter (fun (k, kont) -> kont @@ P.search_node k node) keys
+      for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
     else
       let nkeys, nodes = P.peek_node node in
       let npivots = Array.make (Array.length nkeys) 0 in
@@ -215,7 +215,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if P.size_factor node <= size_factor_threshold || n <= op_threshold then
-      Array.iter (fun (k, kont) -> kont @@ P.search_node k node) keys
+      for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
     else
       let nkeys, nodes = P.peek_node node in
       let ptr = ref rstart in
@@ -238,7 +238,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if P.size_factor node <= size_factor_threshold || n <= op_threshold then
-      Array.iter (fun (k, kont) -> kont @@ P.search_node k node) keys
+      for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
     else
       let nkeys, nodes = P.peek_node node in
       let last_split = ref rstart in
@@ -279,7 +279,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if n <= op_threshold then
-      Array.iter (fun (k, v) -> S.insert k v t) inserts
+      for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
       Sort.sort pool ~compare:(fun (k, _) (k', _) -> compare k k') inserts;
       let num_par = n / op_threshold + if n mod op_threshold > 0 then 1 else 0 in
@@ -299,7 +299,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if n <= op_threshold then
-      Array.iter (fun (k, v) -> S.insert k v t) inserts
+      for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
       let num_par = n / op_threshold + if n mod op_threshold > 0 then 1 else 0 in
       let pivots_arr = Array.init num_par (fun i -> fst inserts.(i)) in   (* Assume that the inserts are random *)
@@ -326,7 +326,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if n <= op_threshold || P.size_factor (P.peek_root t) <= size_factor_threshold then
-      Array.iter (fun (k, v) -> S.insert k v t) inserts
+      for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
       let (kv_arr, t_arr) = P.break_node (P.peek_root t) in
       let ranges = ref [] and prev_ptr = ref rstart and ptr = ref rstart in
@@ -340,8 +340,7 @@ module Make (P : Prebatch) = struct
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges_arr - 1) ~chunk_size:1
         ~body:(fun i ->
           if i > 0 then S.insert (fst kv_arr.(i - 1)) (snd kv_arr.(i - 1)) t_arr.(i);
-          let (rstart, rstop) = ranges_arr.(i) in
-          par_insert_aux_2 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop));
+          par_insert_aux_2 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:ranges_arr.(i));
       P.set_root (P.peek_root @@ P.join t_arr) t
     end
 
@@ -349,7 +348,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if n <= op_threshold || P.size_factor (P.peek_root t) <= size_factor_threshold then
-      Array.iter (fun (k, v) -> S.insert k v t) inserts
+      for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
       let (kv_arr, t_arr) = P.break_node (P.peek_root t) in
       let ranges = ref [] and prev_ptr = ref rstart in
@@ -363,8 +362,7 @@ module Make (P : Prebatch) = struct
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges_arr - 1) ~chunk_size:1
         ~body:(fun i ->
           if i > 0 then S.insert (fst kv_arr.(i - 1)) (snd kv_arr.(i - 1)) t_arr.(i);
-          let (rstart, rstop) = ranges_arr.(i) in
-          par_insert_aux_3 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop));
+          par_insert_aux_3 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:ranges_arr.(i));
       P.set_root (P.peek_root @@ P.join t_arr) t
     end
 
@@ -372,7 +370,7 @@ module Make (P : Prebatch) = struct
     let n = rstop - rstart in
     if n <= 0 then ()
     else if n <= op_threshold || P.size_factor (P.peek_root t) <= size_factor_threshold then
-      Array.iter (fun (k, v) -> S.insert k v t) inserts
+      for i = rstart to rstop - 1 do let (k, v) = inserts.(i) in S.insert k v t done
     else begin
       let (kv_arr, t_arr) = P.break_node (P.peek_root t) in
       let pivots_arr = Array.init (Array.length kv_arr) (fun i -> fst kv_arr.(i)) in
@@ -387,8 +385,7 @@ module Make (P : Prebatch) = struct
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges - 1) ~chunk_size:1
         ~body:(fun i ->
           if i > 0 then S.insert (fst kv_arr.(i - 1)) (snd kv_arr.(i - 1)) t_arr.(i);
-          let (rstart, rstop) = ranges.(i) in
-          par_insert_aux_4 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:(rstart, rstop));
+          par_insert_aux_4 op_threshold size_factor_threshold ~pool t_arr.(i) ~inserts ~range:ranges.(i));
       P.set_root (P.peek_root @@ P.join t_arr) t
     end
 
