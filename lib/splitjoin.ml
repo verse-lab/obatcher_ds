@@ -31,7 +31,7 @@ module type Sequential = sig
 
   val insert : kt -> 'a -> 'a t -> unit
 
-  (* val delete : kt -> 'a t -> unit *)
+  val delete : kt -> 'a t -> unit
 
 end
 
