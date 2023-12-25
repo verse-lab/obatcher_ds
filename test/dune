@@ -23,6 +23,11 @@
  (name test_avlfunctor)
  (modules test_avlfunctor))
 
+(test
+ (libraries obatcher_ds)
+ (name test_rbfunctor)
+ (modules test_rbfunctor))
+
 ; (test
 ;  (libraries obatcher_ds)
 ;  (name test_avltree_par)

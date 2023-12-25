@@ -20,38 +20,14 @@ module Sequential (V: Map.OrderedType) = struct
     mutable root: 'a node
   }
 
-  let insert_op_threshold = ref 64
-  let search_op_threshold = ref 100
-  let height_threshold = ref 6
-  let insert_type = ref 1
-  let search_type = ref 2
-
   let compare = V.compare
-
-  let is_leaf n =
-    match n with
-    | Leaf -> true
-    | Node _ -> false
-
-  let is_empty t = t.root = Leaf
-
-  let get_height t =
-    match t.root with
-    | Leaf -> 0
-    | Node n -> n.bheight
-
-  let wrap_node n = {root = n}
-
-  let unwrap_tree t = t.root
-
-  let set_root_node n t = t.root <- n
 
   let peek n =
     match n with
     | Leaf -> failwith "Peek function: n is a leaf"
     | Node n -> (n.left, n.right)
 
-  let get_node_colour n =
+  let colour n =
     match n with
     | Leaf -> Black
     | Node n' -> n'.colour
@@ -96,7 +72,7 @@ module Sequential (V: Map.OrderedType) = struct
     | Leaf -> ()
     | Node n' ->
       n'.bheight <- max (bheight @@ left n) (bheight @@ right n)
-        + if get_node_colour n = Black then 1 else 0
+        + if colour n = Black then 1 else 0
 
   let parent n =
     match n with
@@ -130,17 +106,9 @@ module Sequential (V: Map.OrderedType) = struct
   let set_colour n c =
     match n with
     | Leaf -> ()
-    | Node n' -> n'.colour <- c
-
-  let set_colour_and_update_bheight n c =
-    match n with
-    | Leaf -> ()
     | Node n' ->
-      if n'.colour = Black && c = Red then
-        n'.bheight <- n'.bheight - 1
-      else if n'.colour = Red && c = Black then
-        n'.bheight <- n'.bheight + 1;
-      n'.colour <- c
+      n'.colour <- c;
+      update_bheight n
 
   (** Break apart a node, returns (left child, node, right child). The children's parents are set to Leaf, and the parent's children as well. *)
   let expose n =
@@ -153,7 +121,7 @@ module Sequential (V: Map.OrderedType) = struct
       let r = n'.right in
       set_child n Left Leaf;
       set_child n Right Leaf;
-      set_bheight n @@ 1 + (if get_node_colour n = Black then 1 else 0);
+      update_bheight n;
       (l, n, r)
 
   let merge_three_nodes nl n nr =
@@ -162,7 +130,7 @@ module Sequential (V: Map.OrderedType) = struct
     | Node _ ->
       set_child n Left nl;
       set_child n Right nr;
-      set_bheight n (max (bheight nl) (bheight nr) + if get_node_colour n = Black then 1 else 0)
+      update_bheight n
 
   let root_node t = t.root
 
@@ -213,11 +181,7 @@ module Sequential (V: Map.OrderedType) = struct
     if parent x = Leaf then t.root <- y
     else if x == left @@ parent x then set_child (parent x) Left y
     else set_child (parent x) Right y;
-    set_child y Left x;
-    set_bheight x @@ max (bheight @@ left x) (bheight @@ right x)
-      + if get_node_colour x = Black then 1 else 0;
-    set_bheight y @@ max (bheight @@ left y) (bheight @@ right y)
-      + if get_node_colour y = Black then 1 else 0
+    set_child y Left x; update_bheight x; update_bheight y
 
   let rotate_right x t =
     let y = left x in
@@ -227,60 +191,36 @@ module Sequential (V: Map.OrderedType) = struct
     if parent x = Leaf then t.root <- y
     else if x == right @@ parent x then set_child (parent x) Right y
     else set_child (parent x) Left y;
-    set_child y Right x;
-    set_bheight x @@ max (bheight @@ left x) (bheight @@ right x)
-      + if get_node_colour x = Black then 1 else 0;
-    set_bheight y @@ max (bheight @@ left y) (bheight @@ right y)
-      + if get_node_colour y = Black then 1 else 0
+    set_child y Right x; update_bheight x; update_bheight y
 
-  let fix_tree n t =
-    let prev_k = ref n in 
-    let k = ref n in
-    while get_node_colour (parent !k) = Red && parent (!k) <> Leaf && parent (parent (!k)) <> Leaf do
-      if parent !k == right @@ parent @@ parent !k then
-        let u = left @@ parent @@ parent !k in
-        update_bheight u;
-        update_bheight (parent !k);
-        update_bheight (parent @@ parent !k);
-        if get_node_colour u == Red then begin
-          set_colour_and_update_bheight u Black;
-          set_colour_and_update_bheight (parent !k) Black;
-          set_colour (parent @@ parent !k) Red;
-          k := parent @@ parent !k
-        end
-        else begin
-          if !k == left @@ parent !k then begin
-            k := parent !k;
-            rotate_right !k t;
-          end;
-          set_colour_and_update_bheight (parent !k) Black;
-          set_colour (parent @@ parent !k) Red;
-          rotate_left (parent @@ parent !k) t
-        end
-      else
-        let u = right @@ parent @@ parent !k in
-        update_bheight u;
-        update_bheight (parent !k);
-        update_bheight (parent @@ parent !k);
-        if get_node_colour u == Red then begin
-          set_colour_and_update_bheight u Black;
-          set_colour_and_update_bheight (parent !k) Black;
-          set_colour (parent @@ parent !k) Red;
-          k := parent @@ parent !k
-        end
-        else begin
-          if !k == right @@ parent !k then begin
-            k := parent !k;
-            rotate_left !k t
-          end;
-          set_colour_and_update_bheight (parent !k) Black;
-          set_colour (parent @@ parent !k) Red;
-          rotate_right (parent @@ parent !k) t
-        end;
-      prev_k := !k;
-    done;
-    update_bheight t.root;
-    set_colour_and_update_bheight t.root Black
+  let rec fix_insert n t =
+    if colour (parent n) = Black then set_colour t.root Black
+    else if parent n = Leaf || parent (parent n) = Leaf then set_colour t.root Black
+    else begin
+      let n_parent = parent n in let n_grandparent = parent n_parent in
+      let (parent_side, uncle) =
+        if n_parent == right n_grandparent then (Right, left n_grandparent)
+        else (Left, right n_grandparent) in
+      update_bheight n_parent;
+      update_bheight n_grandparent;
+      if colour uncle == Red then
+        (set_colour uncle Black;
+        set_colour n_parent Black;
+        set_colour n_grandparent Red;
+        fix_insert n_grandparent t)
+      else begin
+        let n' = ref n in
+        if parent_side = Right && n == left n_parent then
+          (n' := n_parent; rotate_right !n' t)
+        else if parent_side = Left && n == right n_parent then
+          (n' := n_parent; rotate_left !n' t);
+        set_colour (parent !n') Black;
+        set_colour (parent @@ parent !n') Red;
+        if parent_side = Right then
+          rotate_left (parent @@ parent !n') t
+        else rotate_right (parent @@ parent !n') t
+      end
+    end
 
   let rec insert_aux new_node current_node t =
     let k = get_node_key new_node in
@@ -289,9 +229,13 @@ module Sequential (V: Map.OrderedType) = struct
     | Node n' ->
       if n'.key = k then ()
       else if n'.key > k then
-        (if n'.left = Leaf then (set_child current_node Left new_node; fix_tree new_node t)
+        (if n'.left = Leaf then
+          (set_child current_node Left new_node;
+          fix_insert new_node t)
         else insert_aux new_node n'.left t)
-      else if n'.right = Leaf then (set_child current_node Right new_node; fix_tree new_node t)
+      else if n'.right = Leaf then
+        (set_child current_node Right new_node;
+        fix_insert new_node t)
       else insert_aux new_node n'.right t
 
   let insert k v t =
@@ -309,47 +253,121 @@ module Sequential (V: Map.OrderedType) = struct
     | Node n' ->
       if n'.left == Leaf then n
       else find_min_node (n'.left)
-  
-  (* let rec delete_aux current_node k t =
+
+  let rec update_bheight_rec n =
+    update_bheight n;
+    let p = parent n in
+    if p != Leaf then update_bheight_rec p
+
+  let rec fix_delete n p t =
+    if n == t.root || colour n == Red then
+      (set_colour n Black; update_bheight_rec n)
+    else begin
+      update_bheight n;
+      update_bheight p;
+      if n == left p then begin
+        let w = ref (right p) in
+        if colour !w == Red then begin
+          set_colour !w Black;
+          set_colour p Red;
+          rotate_left p t;
+          w := right p;
+        end;
+        if colour (left !w) == Black && colour (right !w) == Black then begin
+          set_colour !w Red;
+          if parent p != Leaf then fix_delete p (parent p) t
+          else set_colour p Black
+        end
+        else begin
+          if colour (right !w) == Black then begin
+            set_colour (left !w) Black;
+            set_colour !w Red;
+            rotate_right !w t;
+            w := right p;
+          end;
+          set_colour !w (colour p);
+          set_colour p Black;
+          set_colour (right !w) Black;
+          rotate_left p t;
+          set_colour t.root Black;
+          update_bheight_rec p
+        end
+      end
+      else begin
+        let w = ref (left p) in
+        if colour !w == Red then begin
+          set_colour !w Black;
+          set_colour p Red;
+          rotate_right p t;
+          w := left p;
+        end;
+        if colour (left !w) == Black && colour (right !w) == Black then begin
+          set_colour !w Red;
+          if parent p != Leaf then fix_delete p (parent p) t
+          else set_colour p Black
+        end
+        else begin
+          if colour (left !w) == Black then begin
+            set_colour (right !w) Black;
+            set_colour !w Red;
+            rotate_left !w t;
+            w := left p;
+          end;
+          set_colour !w (colour p);
+          set_colour p Black;
+          set_colour (left !w) Black;
+          rotate_right p t;
+          set_colour t.root Black;
+          update_bheight_rec p
+        end
+      end
+    end
+
+  let rec delete_aux current_node k t =
     if current_node == Leaf then ()
     else if k < key current_node then
-      (delete_aux (left current_node) k t)
+      delete_aux (left current_node) k t
     else if key current_node < k then
-      (delete_aux (right current_node) k t)
+      delete_aux (right current_node) k t
     else begin
       let p = parent current_node in
       if left current_node = Leaf then
-        (if p == Leaf then
+        if p == Leaf then
           let (_, _, r) = expose current_node in
-          t.root <- r
-        else if right p == current_node then
-          set_child p Right (right current_node)
-        else
-          set_child p Left (right current_node))
+          (t.root <- r; set_colour t.root Black)
+        else begin
+          let r = right current_node in
+          if right p == current_node
+          then set_child p Right r
+          else set_child p Left r;
+          if colour current_node = Black then fix_delete r p t
+          else update_bheight_rec p
+        end
       else if right current_node = Leaf then
-        (if p == Leaf then
+        if p == Leaf then
           let (l, _, _) = expose current_node in
-          t.root <- l
-        else if right p == current_node then
-          set_child p Right (left current_node)
-        else
-          set_child p Left (left current_node))
+          (t.root <- l; set_colour t.root Black)
+        else begin
+          let l = left current_node in
+          if right p == current_node
+          then set_child p Right l
+          else set_child p Left l;
+          if colour current_node = Black then fix_delete l p t
+          else update_bheight_rec p
+        end
       else
         let min_node = find_min_node (right current_node) in
         match current_node with
         | Leaf -> failwith "impossible error"
         | Node n' ->
           n'.key <- key min_node;
-          n'.tval <- tval min_node;
+          n'.tval <- value min_node;
           delete_aux n'.right (key min_node) t
-    end *)
+    end
 
-  (* let rec get_black_height_aux acc n =
-    match n with
-    | Leaf -> acc + 1
-    | Node n' -> get_black_height_aux (acc + if n'.colour = Black then 1 else 0) n'.left
-
-  let get_black_height n = get_black_height_aux 0 n *)
+  let delete k t =
+    if t.root = Leaf then ()
+    else delete_aux t.root k t
 
   (* Inefficient delete function, based on splitting and rejoining the trees *)
   (* let delete k t =
@@ -376,7 +394,7 @@ module Sequential (V: Map.OrderedType) = struct
     | Leaf -> true
     | Node n' ->
       if n'.colour = Red then
-        if get_node_colour n'.left = Black && get_node_colour n'.right = Black then
+        if colour n'.left = Black && colour n'.right = Black then
           verify_internal_property n'.left && verify_internal_property n'.right
         else false
       else verify_internal_property n'.left && verify_internal_property n'.right
@@ -393,12 +411,10 @@ module Sequential (V: Map.OrderedType) = struct
       | Node nln' -> nln'.parent = n && nln'.rl = Left && verify_parent_metadata n'.left
 
   let verify_tree ?(check_root_color=false) t : bool =
-    if check_root_color then get_node_colour t.root = Black
+    if check_root_color then colour t.root = Black
     else
       let (bd, _) = verify_black_depth t.root in
-      bd
-      &&
-      verify_internal_property t.root
+      bd && verify_internal_property t.root
 end
 
 module Prebatch (V: Map.OrderedType) = struct
@@ -417,19 +433,19 @@ module Prebatch (V: Map.OrderedType) = struct
 
   let get_rank n = 
     let bh = S.bheight n in
-    if S.get_node_colour n = Black then 2 * (bh - 1) else 2 * bh - 1
+    if S.colour n = Black then 2 * (bh - 1) else 2 * bh - 1
 
   let rec join_right (tl: 'a S.t) n (tr: 'a S.t) =
     if get_rank tl.root = int_of_float (floor @@ float_of_int (get_rank tr.root) /. 2.) * 2 then
       (S.set_colour n Red; S.merge_three_nodes tl.root n tr.root; {S.root = n})
     else begin
       let (l, mn, r) = S.expose tl.root in
-      let c = S.get_node_colour mn in
+      let c = S.colour mn in
       let ntr = join_right {S.root = r} n tr in
       S.merge_three_nodes l mn ntr.root;
       let t'' = {S.root = mn} in
-      if c == Black && S.get_node_colour (S.right mn) = Red && S.get_node_colour (S.right @@ S.right mn) = Red then begin
-        S.set_colour_and_update_bheight (S.right @@ S.right mn) Black;
+      if c == Black && S.colour (S.right mn) = Red && S.colour (S.right @@ S.right mn) = Red then begin
+        S.set_colour (S.right @@ S.right mn) Black;
         S.rotate_left mn t''
       end; t''
     end
@@ -440,12 +456,12 @@ module Prebatch (V: Map.OrderedType) = struct
       (S.set_colour n Red; S.merge_three_nodes tl.root n tr.root; {S.root = n})
     else begin
       let (l, mn, r) = S.expose tr.root in
-      let c = S.get_node_colour mn in
+      let c = S.colour mn in
       let ntl = join_left tl n {root = l} in
       S.merge_three_nodes ntl.root mn r;
       let t'' = {S.root = mn} in
-      if c == Black && S.get_node_colour (S.left mn) = Red && S.get_node_colour (S.left @@ S.left mn) = Red then begin
-        S.set_colour_and_update_bheight (S.left @@ S.left mn) Black;
+      if c == Black && S.colour (S.left mn) = Red && S.colour (S.left @@ S.left mn) = Red then begin
+        S.set_colour (S.left @@ S.left mn) Black;
         S.rotate_right mn t''
       end; t''
     end
@@ -455,15 +471,15 @@ module Prebatch (V: Map.OrderedType) = struct
     let ctr = int_of_float (floor @@ float_of_int (get_rank tr.root) /. 2.) in
     if ctl > ctr then
       let nt = join_right tl n tr in
-      if S.get_node_colour nt.root = Red && S.get_node_colour (S.right nt.root) = Red then
-        S.set_colour_and_update_bheight nt.root Black;
+      if S.colour nt.root = Red && S.colour (S.right nt.root) = Red then
+        S.set_colour nt.root Black;
       nt
     else if ctr > ctl then
       let nt = join_left tl n tr in
-      if S.get_node_colour nt.root = Red && S.get_node_colour (S.left nt.root) = Red then
-        S.set_colour_and_update_bheight nt.root Black;
+      if S.colour nt.root = Red && S.colour (S.left nt.root) = Red then
+        S.set_colour nt.root Black;
       nt
-    else if S.get_node_colour tl.root = Black && S.get_node_colour tr.root = Black then
+    else if S.colour tl.root = Black && S.colour tr.root = Black then
       (S.set_colour n Red; S.merge_three_nodes tl.root n tr.root; {root = n})
     else (S.set_colour n Black; S.merge_three_nodes tl.root n tr.root; {root = n})
 
