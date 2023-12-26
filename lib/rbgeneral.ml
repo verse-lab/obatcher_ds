@@ -429,7 +429,7 @@ module Prebatch (V: Map.OrderedType) = struct
   let peek_node (n: 'a S.node) =
     match n with
     | Leaf -> failwith "Peek node function: n is a leaf"
-    | Node n' -> ([|n'.key|], [|n'.left; n'.right|])
+    | Node n' -> ([|n'.key|], [|n'.tval|], [|n'.left; n'.right|])
 
   let get_rank n = 
     let bh = S.bheight n in

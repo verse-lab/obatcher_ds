@@ -276,7 +276,7 @@ module Prebatch (V: Map.OrderedType) = struct
   let peek_node (n: 'a S.node) =
     match n with
     | Leaf -> failwith "Peek node function: n is a leaf"
-    | Node n' -> ([|n'.key|], [|n'.left; n'.right|])
+    | Node n' -> ([|n'.key|], [|n'.nval|], [|n'.left; n'.right|])
 
   let rec join_with_node (tl: 'a S.t) n (tr: 'a S.t) =
     if S.priority n >= S.priority tl.root && S.priority n >= S.priority tr.root then

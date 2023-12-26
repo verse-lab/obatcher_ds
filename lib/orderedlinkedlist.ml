@@ -194,9 +194,9 @@ module Prebatch (V: Map.OrderedType)  = struct
     done; t_arr.(Array.length k_arr) <- !acc; t_arr
 
   let peek_node (n: 'a S.node) = match n with
-  | Null -> [||], [|S.Null|]
-  | Hd {next; _} -> [||], [|!next|]
-  | Node {next; key; _} -> [|key|], [|!next|]
+  | Null -> [||], [||], [|S.Null|]
+  | Hd {next; _} -> [||], [||], [|!next|]
+  | Node {next; value; key} -> [|key|], [|value|], [|!next|]
 
   let search_node k n = S.search k n
 end

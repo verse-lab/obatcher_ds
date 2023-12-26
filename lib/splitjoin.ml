@@ -78,7 +78,7 @@ module type Prebatch = sig
   (* Functions for optimizing batched search operations, since we don't need
      to modify the tree. *)
 
-  val peek_node : 'a S.node -> S.kt array * 'a S.node array
+  val peek_node : 'a S.node -> S.kt array * 'a array * 'a S.node array
 
   val search_node : S.kt -> 'a S.node -> 'a option
   (** Like the Sequential search function, but takes a node as input instead.
@@ -150,6 +150,24 @@ module Make (P : Prebatch) = struct
       done;
       if fst arr.(!i) < pivot then !i + 1 else !i
 
+  let partition_two_search arr pivot value lo hi =
+    if hi <= lo then failwith "Invalid partition range"
+    else
+      let i = ref lo in
+      for j = lo to hi - 1 do
+        if fst arr.(j) < pivot then begin
+          let tmp = arr.(!i) in
+          arr.(!i) <- arr.(j);
+          arr.(j) <- tmp;
+          i := !i + 1
+        end
+        else if fst arr.(j) == pivot then begin
+          snd arr.(j) (Some value);
+          arr.(j) <- (fst arr.(j), ignore);
+        end
+      done;
+      if fst arr.(!i) < pivot then !i + 1 else !i
+
   (** Partition a list of operations given an array of pivots. Returns a list of
       indices to separate the partitions. *)
   let partition_seq res_list arr pivot_list lo hi =
@@ -166,6 +184,17 @@ module Make (P : Prebatch) = struct
         aux (pmid + 1) pstop res_list.(pmid) hi in
     aux 0 (Array.length pivot_list) lo hi
 
+  let partition_seq_search res_list arr pivot_list value_list lo hi =
+    let rec aux pstart pstop lo hi =
+      if pstop - pstart <= 0 then ()
+      else if pstop - pstart = 1 then res_list.(pstart) <- partition_two_search arr pivot_list.(pstart) value_list.(pstart) lo hi
+      else
+        let pmid = pstart + (pstop - pstart) / 2 in
+        res_list.(pmid) <- partition_two_search arr pivot_list.(pmid) value_list.(pmid) lo hi;
+        aux pstart pmid lo res_list.(pmid);
+        aux (pmid + 1) pstop res_list.(pmid) hi in
+    aux 0 (Array.length pivot_list) lo hi
+
   (** Same as [partition_seq], but parallelised. *)
   let partition_par pool res_list arr pivot_list lo hi =
     let rec aux pstart pstop lo hi =
@@ -174,6 +203,18 @@ module Make (P : Prebatch) = struct
       else
         let pmid = pstart + (pstop - pstart) / 2 in
         res_list.(pmid) <- partition_two arr pivot_list.(pmid) lo hi;
+        let l = Domainslib.Task.async pool (fun () -> aux pstart pmid lo res_list.(pmid)) in
+        let r = Domainslib.Task.async pool (fun () -> aux (pmid + 1) pstop res_list.(pmid) hi) in
+        Domainslib.Task.await pool l; Domainslib.Task.await pool r in
+    aux 0 (Array.length pivot_list) lo hi
+
+  let partition_par_search pool res_list arr pivot_list value_list lo hi =
+    let rec aux pstart pstop lo hi =
+      if pstop - pstart <= 0 then ()
+      else if pstop - pstart = 1 then res_list.(pstart) <- partition_two_search arr pivot_list.(pstart) value_list.(pstart) lo hi
+      else
+        let pmid = pstart + (pstop - pstart) / 2 in
+        res_list.(pmid) <- partition_two_search arr pivot_list.(pmid) value_list.(pmid) lo hi;
         let l = Domainslib.Task.async pool (fun () -> aux pstart pmid lo res_list.(pmid)) in
         let r = Domainslib.Task.async pool (fun () -> aux (pmid + 1) pstop res_list.(pmid) hi) in
         Domainslib.Task.await pool l; Domainslib.Task.await pool r in
@@ -195,20 +236,21 @@ module Make (P : Prebatch) = struct
 
   (** Partition unsorted batched search operations, split with keys at current root node.
       TO-DO: figure out handling search queries ending at current node. *)
-  (* let rec par_search_aux_2 op_threshold size_factor_threshold ~pool node ~keys ~range:(rstart, rstop) =
+  let rec par_search_aux_2 op_threshold size_factor_threshold ~pool node ~keys ~range:(rstart, rstop) =
     let n = rstop - rstart in
     if n <= 0 then ()
     else if P.size_factor node <= size_factor_threshold || n <= op_threshold then
       for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
     else
-      let nkeys, nodes = P.peek_node node in
+      let nkeys, nvals, nodes = P.peek_node node in
       let npivots = Array.make (Array.length nkeys) 0 in
-      partition_seq npivots keys nkeys rstart rstop;
+      (* partition_seq npivots keys nkeys rstart rstop; *)
+      partition_seq_search npivots keys nkeys nvals rstart rstop;
       let ranges = Array.init (Array.length nkeys + 1) (fun i -> if i = 0 then (rstart, npivots.(i)) else
         if i = Array.length nkeys then (npivots.(i - 1), rstop) else (npivots.(i - 1), npivots.(i))) in
       Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length ranges - 1) ~chunk_size:1
         ~body:(fun i -> let (rstart, rstop) = ranges.(i) in
-          par_search_aux_2 op_threshold size_factor_threshold ~pool nodes.(i) ~keys ~range:(rstart, rstop)) *)
+          par_search_aux_2 op_threshold size_factor_threshold ~pool nodes.(i) ~keys ~range:(rstart, rstop))
 
   (** Batched search operations with linear search in sorted search operations array. *)
   let rec par_search_aux_3 op_threshold size_factor_threshold ~pool node ~keys ~range:(rstart, rstop) =
@@ -217,7 +259,7 @@ module Make (P : Prebatch) = struct
     else if P.size_factor node <= size_factor_threshold || n <= op_threshold then
       for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
     else
-      let nkeys, nodes = P.peek_node node in
+      let nkeys, _, nodes = P.peek_node node in
       let ptr = ref rstart in
       let ranges = ref [] in
       let start = ref rstart in
@@ -240,7 +282,7 @@ module Make (P : Prebatch) = struct
     else if P.size_factor node <= size_factor_threshold || n <= op_threshold then
       for i = rstart to rstop - 1 do let (k, kont) = keys.(i) in kont @@ P.search_node k node done
     else
-      let nkeys, nodes = P.peek_node node in
+      let nkeys, _, nodes = P.peek_node node in
       let last_split = ref rstart in
       let ranges = ref [] in
       for i = 0 to Array.length nkeys - 1 do
@@ -264,14 +306,14 @@ module Make (P : Prebatch) = struct
     match !search_type with
     | 0 -> 
       let node = P.peek_root t in
-      if Array.length keys < search_threshold then
+      (* if Array.length keys < search_threshold then
         Array.iter (fun (k, kont) -> kont @@ P.search_node k node) keys
-      else
+      else *)
         Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length keys - 1) ~body:(fun i ->
           let (k,kont) = keys.(i) in
           kont @@ P.search_node k node)
     | 1 -> par_search_aux_1 search_threshold pool (P.peek_root t) ~keys ~range:(0, Array.length keys)
-    (* | 2 -> par_search_aux_2 search_threshold tree_threshold ~pool (P.peek_root t) ~keys ~range:(0, Array.length keys) *)
+    | 2 -> par_search_aux_2 search_threshold tree_threshold ~pool (P.peek_root t) ~keys ~range:(0, Array.length keys)
     | 3 -> par_search_aux_3 search_threshold tree_threshold ~pool (P.peek_root t) ~keys ~range:(0, Array.length keys)
     | _ -> failwith "Invalid search type"
 

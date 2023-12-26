@@ -242,7 +242,7 @@ module Prebatch (V: Map.OrderedType) = struct
   let peek_node (n: 'a S.node) =
     match n with
     | Leaf -> failwith "Peek node function: n is a leaf"
-    | Node n' -> ([|n'.key|], [|n'.left; n'.right|])
+    | Node n' -> ([|n'.key|], [|n'.nval|], [|n'.left; n'.right|])
 
   let merge_three_nodes (nl: 'a S.node) (n: 'a S.node) (nr: 'a S.node) =
     match n with
