@@ -143,30 +143,36 @@ module Sequential (V: Map.OrderedType) = struct
     set_height x @@ 1 + max (height @@ left x) (height @@ right x);
     set_height y @@ 1 + max (height @@ left y) (height @@ right y)
 
-  let rebalance_node n t =
-    set_height n @@ max (height (left n)) (height (right n)) + 1;
-    let balance = get_balance n in
-    if balance > 1 then
-      if height (left (left n)) >= height (right (left n)) then
-        rotate_right n t
-      else (rotate_left (left n) t; rotate_right n t)
-    else if balance < -1 then
-      if height (right (right n)) >= height (left (right n)) then
-        rotate_left n t
-      else (rotate_right (right n) t; rotate_left n t)
+  let rec rebalance_node n t =
+    if n = Leaf then ()
+    else begin
+      set_height n @@ max (height (left n)) (height (right n)) + 1;
+      let np = parent n in
+      let balance = get_balance n in
+      if balance > 1 then
+        if height (left (left n)) >= height (right (left n)) then
+          rotate_right n t
+        else (rotate_left (left n) t; rotate_right n t)
+      else if balance < -1 then
+        if height (right (right n)) >= height (left (right n)) then
+          rotate_left n t
+        else (rotate_right (right n) t; rotate_left n t);
+      rebalance_node np t
+    end
 
   let rec insert_aux new_node current_node t =
     if key new_node = key current_node then ()
     else begin
-      let () = if key new_node < key current_node then
+      if key new_node < key current_node then
         if left current_node = Leaf then
-          set_child current_node Left new_node
+          (set_child current_node Left new_node;
+          rebalance_node current_node t)
         else insert_aux new_node (left current_node) t
       else
         if right current_node = Leaf then
-          set_child current_node Right new_node
-        else insert_aux new_node (right current_node) t in
-      rebalance_node current_node t
+          (set_child current_node Right new_node;
+          rebalance_node current_node t)
+        else insert_aux new_node (right current_node) t
     end
 
   let insert k v t =
@@ -184,9 +190,9 @@ module Sequential (V: Map.OrderedType) = struct
   let rec delete_aux current_node k t =
     if current_node = Leaf then ()
     else if k < key current_node then
-      (delete_aux (left current_node) k t; rebalance_node current_node t)
+      delete_aux (left current_node) k t
     else if key current_node < k then
-      (delete_aux (right current_node) k t; rebalance_node current_node t)
+      delete_aux (right current_node) k t
     else begin
       let p = parent current_node in
       if left current_node = Leaf then
@@ -196,7 +202,8 @@ module Sequential (V: Map.OrderedType) = struct
         else if right p == current_node then
           set_child p Right (right current_node)
         else
-          set_child p Left (right current_node))
+          set_child p Left (right current_node);
+        rebalance_node current_node t)
       else if right current_node = Leaf then
         (if p == Leaf then
           let (l, _, _) = expose current_node in
@@ -204,7 +211,8 @@ module Sequential (V: Map.OrderedType) = struct
         else if right p == current_node then
           set_child p Right (left current_node)
         else
-          set_child p Left (left current_node))
+          set_child p Left (left current_node);
+        rebalance_node current_node t)
       else
         let min_node = find_min_node (right current_node) in
         match current_node with
@@ -213,7 +221,6 @@ module Sequential (V: Map.OrderedType) = struct
           n'.key <- key min_node;
           n'.nval <- nval min_node;
           delete_aux n'.right (key min_node) t;
-          rebalance_node current_node t;
     end
 
   let delete k t =
