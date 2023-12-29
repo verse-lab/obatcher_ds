@@ -51,3 +51,41 @@ let () = for i = 0 to max_key - 1 do
   else assert (IntAvltree.search i split_arr.(!cur_pivot_idx) = None)
 done;;
 Printf.printf "Verification time for split AVL tree: %fs\n" (Sys.time() -. st);;
+
+
+Printf.printf "\nStarting deletion test for AVL...\n";;
+
+let at3 = IntAvltree.init ();;
+let ref_array_3 = Array.make max_key @@ -1;;
+let st = Sys.time();;
+let num_inserted = ref 0;;
+let () = for _ = 1 to max_key do
+  let k = Random.full_int max_key in
+  let v = Random.full_int max_key in
+  IntAvltree.insert k v at3;
+  if ref_array_3.(k) == -1 then (ref_array_3.(k) <- v; num_inserted := !num_inserted + 1)
+done;;
+Printf.printf "Inserted %d elements into AVL tree\n" !num_inserted;;
+Printf.printf "Insertion time for AVL tree: %fs\n" (Sys.time() -. st);;
+
+let st = Sys.time();;
+let num_removed = ref 0;;
+let () = for k = 1 to max_key / 3 do
+  IntAvltree.delete k at3;
+  if ref_array_3.(k) != -1 then (ref_array_3.(k) <- -1; num_removed := !num_removed + 1)
+done;;
+Printf.printf "Removed %d elements from AVL tree\n" !num_removed;;
+Printf.printf "Deletion time for AVL tree: %fs\n" (Sys.time() -. st);;
+
+let st = Sys.time();;
+assert (IntAvltree.verify_height_invariant at3.root);;
+let num_found = ref 0;;
+let () = for i = 0 to max_key - 1 do
+  if ref_array_3.(i) != -1 then
+    (assert (IntAvltree.search i at3 = Some ref_array_3.(i));
+    num_found := !num_found + 1)
+  else
+    assert (IntAvltree.search i at3 = None)
+done;;
+Printf.printf "Found %d elements in AVL tree after deletion\n" !num_found;;
+Printf.printf "Verification time for AVL tree: %fs\n" (Sys.time() -. st);;
