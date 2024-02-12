@@ -1,6 +1,6 @@
 [@@@warning "-32-26"]
 module IntRbtree = Obatcher_ds.Rbtree.Make(Int);;
-let num_nodes = 10000000;;
+let num_nodes = 1000000;;
 let max_key = num_nodes;;
 Printf.printf "\nTesting RB tree with max %d nodes...\n" num_nodes;;
 

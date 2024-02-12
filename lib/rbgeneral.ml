@@ -11,6 +11,7 @@ module Sequential (V: Map.OrderedType) = struct
     mutable colour: colour;
     mutable rl: side;
     mutable bheight: int;
+    mutable size: int;
     mutable parent: 'a node;
     mutable left: 'a node;
     mutable right: 'a node
@@ -62,6 +63,13 @@ module Sequential (V: Map.OrderedType) = struct
     | Leaf -> 1
     | Node n' -> n'.bheight
 
+  let size_node n =
+    match n with
+    | Leaf -> 0
+    | Node n' -> n'.size
+
+  let size t = size_node t.root
+
   let set_bheight n h =
     match n with
     | Leaf -> ()
@@ -73,6 +81,12 @@ module Sequential (V: Map.OrderedType) = struct
     | Node n' ->
       n'.bheight <- max (bheight @@ left n) (bheight @@ right n)
         + if colour n = Black then 1 else 0
+
+  let update_size n =
+    match n with
+    | Leaf -> ()
+    | Node n' ->
+      n'.size <- size_node n'.right + size_node n'.left + 1
 
   let parent n =
     match n with
@@ -122,6 +136,7 @@ module Sequential (V: Map.OrderedType) = struct
       set_child n Left Leaf;
       set_child n Right Leaf;
       update_bheight n;
+      update_size n;
       (l, n, r)
 
   let merge_three_nodes nl n nr =
@@ -130,7 +145,8 @@ module Sequential (V: Map.OrderedType) = struct
     | Node _ ->
       set_child n Left nl;
       set_child n Right nr;
-      update_bheight n
+      update_bheight n;
+      update_size n
 
   let root_node t = t.root
 
@@ -158,6 +174,7 @@ module Sequential (V: Map.OrderedType) = struct
     colour = Red;
     rl = Left;
     bheight = 1;
+    size = 1;
     parent = Leaf;
     left = Leaf;
     right = Leaf
@@ -173,6 +190,62 @@ module Sequential (V: Map.OrderedType) = struct
 
   let search k t = search_aux k t.root
 
+  let rec find_min_node n =
+    match n with
+    | Leaf -> None
+    | Node n' ->
+      if n'.left == Leaf then Some n
+      else find_min_node (n'.left)
+
+  let rec find_max_node n =
+    match n with
+    | Leaf -> None
+    | Node n' ->
+      if n'.right == Leaf then Some n
+      else find_max_node (n'.right)
+
+  let find_min_key t = Option.map key @@ find_min_node t.root
+
+  let find_max_key t = Option.map key @@ find_max_node t.root
+
+  let find_min_node n = 
+    match find_min_node n with
+    | None -> failwith "Find min node function: n is a leaf"
+    | Some n' -> n'
+
+  let find_max_node n =
+    match find_max_node n with
+    | None -> failwith "Find min node function: n is a leaf"
+    | Some n' -> n'
+
+  let predecessor k t =
+    let rec aux n cur_pred = 
+      match n with
+      | Leaf -> cur_pred
+      | Node n' ->
+        if n'.key == k then
+          if n'.left != Leaf then
+            Some (key (find_max_node n'.left))
+          else cur_pred
+        else if n'.key < k then
+          aux n'.right (Some n'.key)
+        else aux n'.left cur_pred in
+    aux t.root None
+
+  let successor k t =
+    let rec aux n cur_succ = 
+      match n with
+      | Leaf -> cur_succ
+      | Node n' ->
+        if n'.key == k then
+          if n'.right != Leaf then
+            Some (key (find_min_node n'.right))
+          else cur_succ
+        else if n'.key > k then
+          aux n'.left (Some n'.key)
+        else aux n'.right cur_succ in
+    aux t.root None
+
   let rotate_left x t =
     let y = right x in
     set_child x Right (left y);
@@ -181,7 +254,9 @@ module Sequential (V: Map.OrderedType) = struct
     if parent x = Leaf then t.root <- y
     else if x == left @@ parent x then set_child (parent x) Left y
     else set_child (parent x) Right y;
-    set_child y Left x; update_bheight x; update_bheight y
+    set_child y Left x;
+    update_bheight x; update_bheight y;
+    update_size x; update_size y
 
   let rotate_right x t =
     let y = left x in
@@ -191,7 +266,15 @@ module Sequential (V: Map.OrderedType) = struct
     if parent x = Leaf then t.root <- y
     else if x == right @@ parent x then set_child (parent x) Right y
     else set_child (parent x) Left y;
-    set_child y Right x; update_bheight x; update_bheight y
+    set_child y Right x;
+    update_bheight x; update_bheight y;
+    update_size x; update_size y
+
+  let rec update_size_rec n =
+    match n with
+    | Leaf -> failwith "Cannot call update_size_rec on Leaf node"
+    | Node n' ->
+      update_size n; if n'.parent != Leaf then update_size_rec n'.parent
 
   let rec fix_insert n t =
     if colour (parent n) = Black then set_colour t.root Black
@@ -231,10 +314,12 @@ module Sequential (V: Map.OrderedType) = struct
       else if n'.key > k then
         (if n'.left = Leaf then
           (set_child current_node Left new_node;
+          update_size_rec current_node;
           fix_insert new_node t)
         else insert_aux new_node n'.left t)
       else if n'.right = Leaf then
         (set_child current_node Right new_node;
+        update_size_rec current_node;
         fix_insert new_node t)
       else insert_aux new_node n'.right t
 
@@ -247,12 +332,7 @@ module Sequential (V: Map.OrderedType) = struct
       | Leaf -> (n.colour <- Black; n.bheight <- 2; n.parent <- Leaf; t.root <- new_node)
       | Node _ -> (n.colour <- Red; insert_aux new_node t.root t)
 
-  let rec find_min_node n =
-    match n with
-    | Leaf -> failwith "Find min node function: n is a leaf"
-    | Node n' ->
-      if n'.left == Leaf then n
-      else find_min_node (n'.left)
+  
 
   let rec update_bheight_rec n =
     update_bheight n;
@@ -261,10 +341,12 @@ module Sequential (V: Map.OrderedType) = struct
 
   let rec fix_delete n p t =
     if n == t.root || colour n == Red then
-      (set_colour n Black; update_bheight_rec n)
+      (set_colour n Black; update_bheight_rec n; update_size n)
     else begin
       update_bheight n;
       update_bheight p;
+      update_size n;
+      update_size p;
       if n == left p then begin
         let w = ref (right p) in
         if colour !w == Red then begin
@@ -340,6 +422,7 @@ module Sequential (V: Map.OrderedType) = struct
           if right p == current_node
           then set_child p Right r
           else set_child p Left r;
+          update_size_rec p;
           if colour current_node = Black then fix_delete r p t
           else update_bheight_rec p
         end
@@ -352,6 +435,7 @@ module Sequential (V: Map.OrderedType) = struct
           if right p == current_node
           then set_child p Right l
           else set_child p Left l;
+          update_size_rec p;
           if colour current_node = Black then fix_delete l p t
           else update_bheight_rec p
         end

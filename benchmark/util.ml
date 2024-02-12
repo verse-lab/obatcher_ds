@@ -23,4 +23,4 @@ let gen_random_array ~min ~max count =
   | _ when max > max_rdm_int ->  
     let s = Format.sprintf "max cannot be greater than %d" max_rdm_int in failwith s
   | _ -> ();
-    Array.init count (fun _ -> Random.int max_rdm_int)
+    Array.init count (fun _ -> Random.int max)

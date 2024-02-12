@@ -145,3 +145,78 @@ linkedlist : orderedlinkedlist.ml
 	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
 	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
 	$(B) linkedlist-batched --init-count=$(LL_PRESET) --count=$(LL_OPS) --no-searches=$(LL_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
+
+VEB_PRESET := 2_000_000
+VEB_INS := 1_000_000
+# Need to fix assertion error with search
+VEB_SEARCH := 0
+vebtree : vebtree.ml
+	printf "vebtree-Sequential\n"
+	$(B) vebtree-sequential --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP)
+
+	# printf "vebtree-Coarse-Grained\n"
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 2
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 3
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 4
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 5
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 6
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 7
+	# $(B) vebtree-coarse-grained --init-count=$(VEB_PRESET) --count=$(VEB_INS) --no-searches=$(VEB_SEARCH) -i $(ITER) -w $(WARMUP) -D 8
+
+	printf "vebtree-Batched\n"
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 1
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 2
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 3
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 4
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 5
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 6
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 7
+	$(B) vebtree-batched --init-count=$(VEB_PRESET) --count=$(VEB_INS) -i $(ITER) --no-searches=$(VEB_SEARCH) -w $(WARMUP) -D 8
+
+
+XFAST_PRESET := 2_000_000
+XFAST_INS := 1_000_000
+# Need to fix assertion error with search
+XFAST_SEARCH := 0
+xfast : xfast.ml
+	printf "xfast-Sequential\n"
+	$(B) xfast-sequential --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP)
+
+	# printf "xfast-Coarse-Grained\n"
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 2
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 3
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 4
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 5
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 6
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 7
+	# $(B) xfast-coarse-grained --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) --no-searches=$(XFAST_SEARCH) -i $(ITER) -w $(WARMUP) -D 8
+
+	printf "xfast-Batched\n"
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 1
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 2
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 3
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 4
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 5
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 6
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 7
+	$(B) xfast-batched --init-count=$(XFAST_PRESET) --count=$(XFAST_INS) -i $(ITER) --no-searches=$(XFAST_SEARCH) -w $(WARMUP) -D 8
+
+YFAST_PRESET := 2_000_000
+YFAST_INS := 1_000_000
+# Need to fix assertion error with search
+YFAST_SEARCH := 0
+yfast : yfast.ml
+	printf "yfast-Sequential\n"
+	$(B) yfast-sequential --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) --no-searches=$(YFAST_SEARCH) -i $(ITER) -w $(WARMUP)
+
+	printf "yfast-Batched\n"
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 1
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 2
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 3
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 4
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 5
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 6
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 7
+	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 8

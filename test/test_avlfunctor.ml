@@ -2,7 +2,7 @@ module IntAvltree = Obatcher_ds.Avlgeneral.Sequential(Int);;
 module IntAvltreePrebatch = Obatcher_ds.Avlgeneral.Prebatch(Int);;
 module IntAvltreeSplitJoin = Obatcher_ds.Splitjoin.Make(IntAvltreePrebatch);;
 
-let num_nodes = 10000000;;
+let num_nodes = 11000000;;
 let max_key = num_nodes;;
 let num_pivots = 10000;;
 

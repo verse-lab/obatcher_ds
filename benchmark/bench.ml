@@ -74,7 +74,21 @@ let () =
   Hashtbl.add benchmarks "btree-sequential" (module Btree.Sequential);
   Hashtbl.add benchmarks "btree-coarse-grained" (module Btree.CoarseGrained);
   Hashtbl.add benchmarks "btree-batched" (module Btree.Batched);
-  Hashtbl.add benchmarks "btree-explicitly-batched" (module Btree.ExplicitlyBatched)
+  Hashtbl.add benchmarks "btree-explicitly-batched" (module Btree.ExplicitlyBatched);
+
+  Hashtbl.add benchmarks "vebtree-sequential" (module Vebtree.Sequential);
+  Hashtbl.add benchmarks "vebtree-coarse-grained" (module Vebtree.CoarseGrained);
+  Hashtbl.add benchmarks "vebtree-batched" (module Vebtree.Batched);
+  (* Hashtbl.add benchmarks "vebtree-explicitly-batched" (module Vebtree.ExplicitlyBatched) *)
+
+  Hashtbl.add benchmarks "xfast-sequential" (module Xfast.Sequential);
+  Hashtbl.add benchmarks "xfast-coarse-grained" (module Xfast.CoarseGrained);
+  Hashtbl.add benchmarks "xfast-batched" (module Xfast.Batched);
+  (* Hashtbl.add benchmarks "xfast-explicitly-batched" (module Xfast.ExplicitlyBatched) *)
+
+  Hashtbl.add benchmarks "yfast-sequential" (module Yfast.Sequential);
+  Hashtbl.add benchmarks "yfast-coarse-grained" (module Yfast.CoarseGrained);
+  Hashtbl.add benchmarks "yfast-batched" (module Yfast.Batched)
 
 
 

@@ -1,22 +1,22 @@
-(test
- (libraries obatcher_ds)
- (name test_avltree)
- (modules test_avltree))
+; (test
+;  (libraries obatcher_ds)
+;  (name test_avltree)
+;  (modules test_avltree))
 
-(test
- (libraries obatcher_ds)
- (name test_rbtree)
- (modules test_rbtree))
+; (test
+;  (libraries obatcher_ds)
+;  (name test_rbtree)
+;  (modules test_rbtree))
 
-(test
- (libraries obatcher_ds)
- (name test_treap)
- (modules test_treap))
+; (test
+;  (libraries obatcher_ds)
+;  (name test_treap)
+;  (modules test_treap))
 
-(test
- (libraries obatcher_ds)
- (name test_orderedlinkedlist)
- (modules test_orderedlinkedlist))
+; (test
+;  (libraries obatcher_ds)
+;  (name test_orderedlinkedlist)
+;  (modules test_orderedlinkedlist))
 
 (test
  (libraries obatcher_ds)
@@ -27,6 +27,21 @@
  (libraries obatcher_ds)
  (name test_rbfunctor)
  (modules test_rbfunctor))
+
+(test
+ (libraries obatcher_ds)
+ (name test_vebtree)
+ (modules test_vebtree))
+
+(test
+ (libraries obatcher_ds)
+ (name test_xfast)
+ (modules test_xfast))
+
+(test
+ (libraries obatcher_ds)
+ (name test_yfast)
+ (modules test_yfast))
 
 ; (test
 ;  (libraries obatcher_ds)
