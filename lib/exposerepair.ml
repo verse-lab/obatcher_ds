@@ -21,37 +21,16 @@ module type Prebatch = sig
   
   module S : Sequential
 
-  type dt (* More abstract subdivision of data structure than node *)
+  type dt (* Supplementary data for the exposed data structure *)
 
   val compare : S.kt -> S.kt -> int
   (** Should expose the comparison function for the ordered key type. *)
 
-  (* val peek_root : S.t -> S.node *)
-  (** [peek_root t] allows access to the root node of the data structure. Does not
-      remove the root node from the in-place wrapper. *)
+  val expose_t : S.t -> S.kt array -> S.kt array * dt
 
-  (* val size_factor : S.node -> int *)
-  (** Should return a nonnegative integer that is some sort of factor related
-      to the size of the data structure that can be used to compare against the
-      batch sequential threshold (e.g. height of an AVL tree, black height of a
-      Red-Black tree, etc.) *)
+  val insert_t : S.t -> S.kt array -> dt -> int * int -> unit
 
-  (* Changes the input array in place to make pivots *)
-  (* val make_pivots : S.t -> S.kt array -> S.kt array *)
-
-  val expose_t : S.t -> S.kt array -> S.kt array * dt array
-
-  val insert_dt : S.t -> dt -> S.kt array -> int * int -> unit
-
-  (* val insert_node : S.t -> S.node -> S.kt -> unit
-
-  val delete_node : S.t -> S.node -> S.kt -> unit *)
-
-  val repair_t : S.t -> dt array -> unit
-
-  (* val expose_node : S.t -> S.node -> (S.kt * 'a) array * S.t array
-
-  val repair_node : S.t -> S.node -> unit *)
+  val repair_t : S.t -> dt -> unit
 
 end
 
@@ -89,13 +68,6 @@ module Make (P : Prebatch) = struct
     else if arr.(!left) >= target then !left
     else 0
 
-  (* let deduplicate ops: S.kt array =
-    let new_ops_list = ref [] in
-    for i = Array.length ops - 1 downto 0 do
-      if i = 0 || ops.(i) <> ops.(i - 1)
-      then new_ops_list := ops.(i) :: !new_ops_list
-    done; Array.of_list !new_ops_list *)
-
   let partition_two arr pivot lo hi =
     if hi <= lo then failwith "Invalid partition range"
     else
@@ -111,9 +83,6 @@ module Make (P : Prebatch) = struct
       if arr.(!i) < pivot then !i + 1 else !i
 
   let partition_seq res_list arr pivot_list lo hi =
-    (* Slower version; simply iterates through each pivot in order *)
-    (* let clo = ref lo in 
-    Array.iteri (fun i p -> res_list.(i) <- partition_two arr p !clo hi; clo := res_list.(i)) pivot_list *)
     let rec aux pstart pstop lo hi =
       if pstop - pstart <= 0 then ()
       else if pstop - pstart = 1 then res_list.(pstart) <- partition_two arr pivot_list.(pstart) lo hi
@@ -146,7 +115,7 @@ module Make (P : Prebatch) = struct
       let num_par = n / !insert_op_threshold + if n mod !insert_op_threshold > 0 then 1 else 0 in
       let pivot_seeds = Array.init num_par (fun i -> inserts.(i)) in (* Assume insert operations are random *)
       Sort.sort pool ~compare pivot_seeds;
-      let (pivots_arr, dt_arr) = P.expose_t t pivot_seeds in
+      let (pivots_arr, dt) = P.expose_t t pivot_seeds in
       let npivots = Array.make (Array.length pivots_arr) 0 in
       partition_par pool npivots inserts pivots_arr 0 n;
       let ranges = Array.init
@@ -155,27 +124,10 @@ module Make (P : Prebatch) = struct
           if i = 0 then (0, npivots.(i))
           else if i = Array.length pivots_arr then (npivots.(i - 1), n)
           else (npivots.(i - 1), npivots.(i))) in
-
-
-      (* let pivots = Array.init num_par (fun i -> inserts.(i)) in
-      Sort.sort pool ~compare pivots;
-      let pivots = deduplicate @@ P.make_pivots t pivots in
-      (* let pivots = deduplicate pivots in *)
-      let npivots = Array.make (Array.length pivots) 0 in
-      (* partition_seq npivots inserts pivots 0 n; *)
-      partition_par pool npivots inserts pivots 0 n;
-      let ranges = Array.init
-        (Array.length pivots + 1)
-        (fun i ->
-          if i = 0 then (0, npivots.(i))
-          else if i = Array.length pivots then (npivots.(i - 1), n)
-          else (npivots.(i - 1), npivots.(i))) in
-      let dt_arr = P.expose_t t pivots in
-      assert (Array.length dt_arr = Array.length ranges); *)
       Domainslib.Task.parallel_for pool
         ~start:0 ~finish:(Array.length ranges - 1) ~chunk_size:1
-        ~body:(fun i -> P.insert_dt t dt_arr.(i) inserts ranges.(i));
-      P.repair_t t dt_arr
+        ~body:(fun i -> P.insert_t t inserts dt ranges.(i));
+      P.repair_t t dt
     end
 
   let run t (pool: Domainslib.Task.pool) (ops: wrapped_op array) : unit =

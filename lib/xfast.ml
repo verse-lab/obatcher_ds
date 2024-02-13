@@ -363,12 +363,12 @@ module Prebatch (T : XfastTabl) = struct
       then new_ops_list := ops.(i) :: !new_ops_list
     done; Array.of_list !new_ops_list
 
-  let make_pivots (t: S.t) arr =
+  (* let make_pivots (t: S.t) arr =
     let f_plength = float_of_int @@ Array.length arr in
     let target_lvl = int_of_float (ceil @@ log f_plength /. log 2.) - 1 in
     deduplicate @@ Array.init
       (Array.length arr)
-      (fun i -> S.get_prefix_at_lvl t target_lvl arr.(i))
+      (fun i -> S.get_prefix_at_lvl t target_lvl arr.(i)) *)
 
   let update_node (t: S.t) (n: S.node) =
     let right_node = Option.get n.right in
@@ -481,9 +481,9 @@ module Prebatch (T : XfastTabl) = struct
           S.update_max_ptr (Option.get prev_node) None
         )
       pivots;
-    (pivots, Array.make (Array.length pivots + 1) target_lvl)
+    (pivots, target_lvl)
 
-  let insert_dt (t: S.t) dt arr range =
+  let insert_t (t: S.t) arr dt range =
     for i = fst range to snd range - 1 do
       (* let mask = Int.logxor t.max_val (Int.shift_right_logical t.max_val (dt + 1)) in
       let prefix = Int.logand mask arr.(i) in *)
@@ -501,7 +501,7 @@ module Prebatch (T : XfastTabl) = struct
     end; update_node t n
 
   let repair_t (t: S.t) dt =
-    repair_t_aux t t.root dt.(0)
+    repair_t_aux t t.root dt
 
 end
 

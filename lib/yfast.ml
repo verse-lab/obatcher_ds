@@ -204,11 +204,12 @@ module Prebatch = struct
 
   module S = Sequential
 
-  module Ints = Set.Make(Int)
-  type dt = {
+  (* module Ints = Set.Make(Int) *)
+  type dt = unit
+  (* type dt = {
     mutable rem : Ints.t;
     mutable add : (int * unit S.Rbtree.S.t) list
-  }
+  } *)
 
   let compare = Int.compare
 
@@ -219,37 +220,68 @@ module Prebatch = struct
       then new_ops_list := ops.(i) :: !new_ops_list
     done; Array.of_list !new_ops_list
 
-  let make_pivots (t: S.t) (arr: S.kt array) =
+  (* let make_pivots (t: S.t) (arr: S.kt array) =
     Array.init
       (Array.length arr)
       (fun i ->
         if S.Xfast.mem t.xfast_layer arr.(i) then arr.(i)
-        else Option.get @@ S.Xfast.predecessor t.xfast_layer arr.(i))
-    (* for i = 0 to Array.length arr - 1 do
-      let x = arr.(i) in
-      arr.(i) <-
-        if S.Xfast.mem t.xfast_layer x then x
-        else Option.get @@ S.Xfast.predecessor t.xfast_layer x
-    done *)
+        else Option.get @@ S.Xfast.predecessor t.xfast_layer arr.(i)) *)
 
   let expose_t (t: S.t) (arr: S.kt array) =
     deduplicate @@ Array.init
       (Array.length arr)
       (fun i ->
         if S.Xfast.mem t.xfast_layer arr.(i) then arr.(i)
-        else Option.get @@ S.Xfast.predecessor t.xfast_layer arr.(i)),
-    Array.init (Array.length arr + 1) (fun _ -> {rem = Ints.empty; add = []})
+        else Option.get @@ S.Xfast.predecessor t.xfast_layer arr.(i)), ()
+    (* Array.init (Array.length arr + 1) (fun _ -> {rem = Ints.empty; add = []}) *)
 
-  let insert_dt_aux (t: S.t) dt x =
+  (* let insert_dt_aux (t: S.t) dt x =
     let rb_idx =
       if S.Xfast.mem t.xfast_layer x then x
       else Option.get @@ S.Xfast.predecessor t.xfast_layer x in
     let rb = Hashtbl.find t.rb_layer rb_idx in
-    S.Rbtree.S.insert x () rb;
-    if S.Rbtree.S.size rb > 2 * t.int_size then
-      dt.rem <- Ints.add rb_idx dt.rem
+    S.Rbtree.S.insert x () rb *)
+    (* if S.Rbtree.S.size rb > 2 * t.int_size then
+      dt.rem <- Ints.add rb_idx dt.rem *)
 
-  let insert_dt (t: S.t) dt arr range =
+  let insert_t (t: S.t) arr dt range =
+    for i = fst range to snd range - 1 do
+      let x = arr.(i) in
+      let rb_idx =
+        if S.Xfast.mem t.xfast_layer x then x
+        else Option.get @@ S.Xfast.predecessor t.xfast_layer x in
+      let rb = Hashtbl.find t.rb_layer rb_idx in
+      S.Rbtree.S.insert x () rb
+      (* insert_dt_aux t dt arr.(i) *)
+    done
+
+  let rec split_rb_tree_and_insert (t: S.t) rb rb_idx =
+    let (left_idx, left_rb), (right_idx, right_rb) =
+      S.split_rb_tree rb rb_idx in
+    if S.Rbtree.S.size left_rb > 2 * t.int_size then
+      split_rb_tree_and_insert t left_rb left_idx
+    else S.insert_rb_tree t left_idx left_rb;
+    if S.Rbtree.S.size right_rb > 2 * t.int_size then
+      split_rb_tree_and_insert t right_rb right_idx
+    else S.insert_rb_tree t right_idx right_rb
+
+  let repair_t (t: S.t) dt =
+    let to_split =
+      Hashtbl.fold
+        (fun i rb l ->
+          if S.Rbtree.S.size rb > 2 * t.int_size
+          then i :: l else l)
+        t.rb_layer [] in
+    List.iter
+      (fun i ->
+        let rb = Hashtbl.find t.rb_layer i in
+        S.remove_rb_tree t i;
+        split_rb_tree_and_insert t rb i)
+      to_split
+    
+      
+
+  (* let insert_dt (t: S.t) dt arr range =
     for i = fst range to snd range - 1 do
       insert_dt_aux t dt arr.(i)
     done;
@@ -292,6 +324,6 @@ module Prebatch = struct
       (fun dt ->
         Ints.iter (fun x -> S.remove_rb_tree t x) dt.rem;
         List.iter (fun (idx, rb) -> S.insert_rb_tree t idx rb) dt.add)
-      arr
+      arr *)
 
 end
