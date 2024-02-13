@@ -15,6 +15,10 @@ module type Sequential = sig
 
   val delete : t -> kt -> unit
 
+  val predecessor : t -> kt -> kt option
+
+  val successor : t -> kt -> kt option
+
 end
 
 module type Prebatch = sig

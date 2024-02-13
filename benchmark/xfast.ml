@@ -99,12 +99,18 @@ module Sequential = struct
       IntXfastTrie.size t |> ignore
     done *)
 
-  let cleanup (_t: t) (test_spec: test_spec) =
+  let cleanup (t: t) (test_spec: test_spec) =
     let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
-    let all_elements = Array.to_list all_elements in
-    let vebtree_flattened = IntXfastTrie.flatten _t in
-    assert (all_elements = vebtree_flattened)
+    let all_elements_list = Array.to_list all_elements in
+    let vebtree_flattened = IntXfastTrie.flatten t in
+    assert (all_elements_list = vebtree_flattened);
+    for i = 0 to Array.length all_elements - 1 do
+      if i > 0 then
+        assert (all_elements.(i - 1) = Option.get @@ IntXfastTrie.predecessor t all_elements.(i));
+      if i < Array.length all_elements - 1 then
+        assert (all_elements.(i + 1) = Option.get @@ IntXfastTrie.successor t all_elements.(i))
+    done
 
 end
 
@@ -197,19 +203,15 @@ module Batched = struct
     let t = BatchedIntXfastTrie.unsafe_get_internal_data t in
     let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
-
-    (* Printf.printf "Should find the following: [";
-    Array.iter (Printf.printf "%d, ") all_elements;
-    Printf.printf "]\n"; *)
-
-    let all_elements = Array.to_list all_elements in
+    let all_elements_list = Array.to_list all_elements in
     let vebtree_flattened = IntXfastTrie.flatten t in
-
-    (* Printf.printf "Found the following: [";
-    List.iter (Printf.printf "%d, ") vebtree_flattened;
-    Printf.printf "]\n"; *)
-
-    assert (all_elements = vebtree_flattened)
+    assert (all_elements_list = vebtree_flattened);
+    for i = 0 to Array.length all_elements - 1 do
+      if i > 0 then
+        assert (all_elements.(i - 1) = Option.get @@ IntXfastTrie.predecessor t all_elements.(i));
+      if i < Array.length all_elements - 1 then
+        assert (all_elements.(i + 1) = Option.get @@ IntXfastTrie.successor t all_elements.(i))
+    done
 
 end
 
