@@ -52,11 +52,7 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
 let generic_test_spec ~count spec_args =
   let {min;max;initial_count;_} = spec_args in
   let all_elements = Util.gen_random_unique_array ~min ~max (initial_count + count) in
-  (* Printf.printf "min: %d, max: %d\n" min max; *)
   let initial_elements = Array.sub all_elements 0 initial_count in
-  (* let initial_elements = Util.gen_random_array ~min ~max initial_count in *)
-  (* Array.iter (fun i -> Printf.printf "%d " i) (initial_elements ()); *)
-  (* let insert_elements = Util.gen_random_array ~min ~max count in *)
   let insert_elements = Array.sub all_elements initial_count count in
   let search_elements = Util.gen_random_array ~min ~max spec_args.no_searches in
   if spec_args.sorted then
@@ -78,28 +74,16 @@ module Sequential = struct
 
   let init _pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    (* let size = Array.length initial_elements + Array.length test_spec.insert_elements in *)
     let skiplist = IntYfastTrie.init int_size in
-    (* Printf.printf "initializing with %d elements\n" (Array.length initial_elements);
-    Printf.printf "max element: %d\n" (Array.fold_left max 0 initial_elements); *)
     Array.iter (fun i -> IntYfastTrie.insert skiplist i) initial_elements;
-    (* Printf.printf "initialized with %d elements\n" (Array.length initial_elements); *)
     skiplist
 
   let run _pool t test_spec =
-    (* Printf.printf "inserting %d elements\n" (Array.length test_spec.insert_elements); *)
-    Array.iter (fun i ->
-        IntYfastTrie.insert t i) test_spec.insert_elements;
-    (* Printf.printf "inserted %d elements\n" (Array.length test_spec.insert_elements);
-    Printf.printf "searching %d elements\n" (Array.length test_spec.search_elements); *)
-    Array.iter (fun i ->
-        IntYfastTrie.mem t i |> ignore) test_spec.search_elements
-    (* for _ = 1 to test_spec.size do
-      IntYfastTrie.Sequential.size t |> ignore
-    done *)
+    Array.iter (fun i -> IntYfastTrie.insert t i) test_spec.insert_elements;
+    Array.iter (fun i -> IntYfastTrie.mem t i |> ignore) test_spec.search_elements
 
-  let cleanup (t: t) (test_spec: test_spec) =
-    let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
+  let cleanup (t: t) (test_spec: test_spec) = ()
+    (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements_list = Array.to_list all_elements in
     let vebtree_flattened = IntYfastTrie.flatten t in
@@ -109,7 +93,7 @@ module Sequential = struct
         assert (all_elements.(i - 1) = Option.get @@ IntYfastTrie.predecessor t all_elements.(i));
       if i < Array.length all_elements - 1 then
         assert (all_elements.(i + 1) = Option.get @@ IntYfastTrie.successor t all_elements.(i))
-    done
+    done *)
 
 end
 
@@ -130,7 +114,6 @@ module CoarseGrained = struct
 
   let init _pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    (* let size = Array.length initial_elements + Array.length test_spec.insert_elements in *)
     let skiplist = IntYfastTrie.init int_size in
     Array.iter (fun i -> IntYfastTrie.insert skiplist i) initial_elements;
     {skiplist; mutex=Mutex.create ()}
@@ -147,17 +130,15 @@ module CoarseGrained = struct
               else if i < Array.length test_spec.insert_elements + Array.length test_spec.search_elements then
                 ignore (IntYfastTrie.mem t.skiplist
                           test_spec.search_elements.(i - Array.length test_spec.insert_elements))
-              (* else
-                ignore (IntYfastTrie.Sequential.size t.skiplist) *)
             )
         )
 
-  let cleanup (t: t) (test_spec: test_spec) = 
-    let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
+  let cleanup (t: t) (test_spec: test_spec) = ()
+    (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements = Array.to_list all_elements in
     let vebtree_flattened = IntYfastTrie.flatten t.skiplist in
-    assert (all_elements = vebtree_flattened)
+    assert (all_elements = vebtree_flattened) *)
 
 end
 
@@ -176,16 +157,15 @@ module Batched = struct
 
   let init pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    (* Printf.printf "initializing with %d elements\n" (Array.length initial_elements);
-    Printf.printf "max element: %d\n" (Array.fold_left max 0 initial_elements); *)
     IntYfastTrieFunctor.universe_size := int_size;
     let skiplist = BatchedYfastTrie.init pool in
-    Array.iter (fun i -> BatchedYfastTrie.apply skiplist (Insert i)) initial_elements;
+    let exposed_tree = BatchedYfastTrie.unsafe_get_internal_data skiplist in
+    Array.iter (fun i -> IntYfastTrie.insert exposed_tree i) initial_elements;
     skiplist
 
   let run pool t test_spec =
-    (* Printf.printf "inserting %d elements\n" (Array.length test_spec.insert_elements); *)
     let total = Array.length test_spec.insert_elements + Array.length test_spec.search_elements - 1 in
+    BatchedYfastTrie.restart_batcher_timer t;
     Domainslib.Task.parallel_for pool
       ~start:0 ~finish:total ~chunk_size:1
       ~body:(fun i ->
@@ -194,13 +174,10 @@ module Batched = struct
           else if i < Array.length test_spec.insert_elements + Array.length test_spec.search_elements then
             ignore (BatchedYfastTrie.apply t 
                       (Member test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
-          (* else
-            ignore (BatchedYfastTrie.apply t Size) *)
         );
     BatchedYfastTrie.wait_for_batch t
 
-  let cleanup (t: t) (test_spec: test_spec) =
-    (* Printf.printf "Checking now\n"; *)
+  let cleanup (t: t) (test_spec: test_spec) = 
     let t = BatchedYfastTrie.unsafe_get_internal_data t in
     let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;

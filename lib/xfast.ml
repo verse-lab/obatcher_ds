@@ -80,8 +80,8 @@ module Sequential (T : XfastTabl) = struct
     max_val: int;
     tables: node T.t;
     mutable root: node;
-    (* mutable min: int option;
-    mutable max: int option; *)
+    (* mutable min: node option;
+    mutable max: node option; *)
   }
 
   let get_value n = n.value
@@ -107,6 +107,8 @@ module Sequential (T : XfastTabl) = struct
         has_right = false;
         right = None
       };
+      (* min = None;
+      max = None *)
     }
 
   let mem t x =
@@ -146,9 +148,9 @@ module Sequential (T : XfastTabl) = struct
 
   let longest_prefix_node_from_lvl t start_node start_lvl x =
     let low = ref start_lvl in
-    let high = ref @@ t.max_lvl + 1 in
+    let high = ref @@ t.max_lvl in
     let res_node = ref start_node in
-    while !low < !high do
+    while !low <= !high do
       let mid = (!low + !high) / 2 in
       let prefix = get_prefix_at_lvl t mid x in
       (* let mask = Int.logxor t.max_val (Int.shift_right_logical t.max_val (mid + 1)) in
@@ -157,29 +159,110 @@ module Sequential (T : XfastTabl) = struct
       if mid_node != None then begin
         res_node := Option.get mid_node;
         low := mid + 1
-      end else high := mid
+      end else high := mid - 1
 
     done; !res_node
 
   let longest_prefix_node t x = longest_prefix_node_from_lvl t t.root 0 x
 
-  let successor_from_prefix n x =
-    if not n.has_right then n.right
-    else Some (get_min_node @@ Option.get n.right)
+  (* let nearest_node_from_prefix t n x =
+    if n.lvl = t.max_lvl then Some n else begin
+    (* Printf.printf "Hi\n"; *)
+    (* if n.value != None && n.lvl = t.max_lvl && Option.get n.value = x then Some n else begin *)
+      (* Printf.printf "Sup\n"; *)
+      let pos = Int.shift_left 1 (t.max_lvl - (n.lvl + 1)) in
+      let is_right = Int.logand x pos > 0 in
+      let descendant = if is_right then n.right else n.left in
+      if descendant != None then begin
+        let descendant = Option.get descendant in
+        let candidate = if is_right then descendant.right else descendant.left in
+        if candidate = None then
+          Some descendant
+        else
+          let candidate = Option.get candidate in
+          if abs ((Option.get descendant.value) - x) < abs((Option.get candidate.value) - x) then
+            Some descendant
+          else Some candidate
+      end else None
+    end *)
 
-  let predecessor_from_prefix n x =
-    if not n.has_left then n.left
-    else Some (get_max_node @@ Option.get n.left)
+  (* let successor_node_from_prefix t n x =
+    if Option.get n.value = x then
+      n.right
+    else begin
+      let pos = Int.shift_left 1 (t.max_lvl - (n.lvl + 1)) in
+      let is_right = Int.logand x pos > 0 in
+      let descendant = if is_right then n.right else n.left in
+      if descendant != None then begin
+        let descendant = Option.get descendant in
+        let candidate = if is_right then descendant.right else descendant.left in
+        if candidate = None 
+      end;
+      n.right
+    end *)
+
+  (* let successor_from_prefix t n x =
+    Option.bind
+      (nearest_node_from_prefix t n x)
+      (fun n' -> if Option.get n'.value > x then Some n' else n'.right)
+
+  let predecessor_from_prefix t n x =
+    Option.bind
+      (nearest_node_from_prefix t n x)
+      (fun n' -> if Option.get n'.value < x then Some n' else n'.left) *)
+
+  (* let successor_from_prefix t prefix_node x =
+    if prefix_node.lvl = t.max_lvl || not prefix_node.has_right then
+      prefix_node.right
+    else begin
+      let pos = Int.shift_left 1 (t.max_lvl - (prefix_node.lvl + 1)) in
+      let is_right = Int.logand x pos > 0 in
+      let next_node = if is_right then prefix_node.left else prefix_node.right in
+      let res = Option.bind
+        next_node
+        (fun n' -> if Option.get n'.value <= x then n'.right else next_node) in
+      assert (if res = None then true else (Option.get res).lvl = t.max_lvl); res
+    end
+
+  let predecessor_from_prefix t prefix_node x =
+    if prefix_node.lvl = t.max_lvl || not prefix_node.has_left then
+      prefix_node.left
+    else begin
+      Printf.printf "Level: %d\n" prefix_node.lvl;
+      let pos = Int.shift_left 1 (t.max_lvl - (prefix_node.lvl + 1)) in
+      let is_right = Int.logand x pos > 0 in
+      let next_node = if is_right then prefix_node.left else prefix_node.right in
+      let res = Option.bind
+        next_node
+        (fun n' -> if Option.get n'.value >= x then n'.left else next_node) in
+      assert (if res = None then true else (Option.get res).lvl = t.max_lvl); res
+    end *)
+
+  let successor_from_prefix _t n x =
+    if not n.has_right then
+      n.right
+    else if n.left <> None then
+      (Option.get n.left).right
+    else
+      Some (get_min_node @@ Option.get n.right)
+
+  let predecessor_from_prefix _t n x =
+    if not n.has_left then
+      n.left
+    else if n.right <> None then
+      (Option.get n.right).left
+    else
+      Some (get_max_node @@ Option.get n.left)
 
   let successor_node t x =
     match T.find_in_level t.tables t.max_lvl x with
     | Some n' -> n'.right
-    | None -> successor_from_prefix (longest_prefix_node t x) x
+    | None -> successor_from_prefix t (longest_prefix_node t x) x
 
   let predecessor_node t x =
     match T.find_in_level t.tables t.max_lvl x with
     | Some n' -> n'.left
-    | None -> predecessor_from_prefix (longest_prefix_node t x) x
+    | None -> predecessor_from_prefix t (longest_prefix_node t x) x
 
   let successor t x = Option.bind (successor_node t x) get_value
 
@@ -222,10 +305,17 @@ module Sequential (T : XfastTabl) = struct
 
   let insert_node t n x =
     if mem t x then () else begin
+      (* Printf.printf "wee\n"; *)
       let prefix_node = longest_prefix_node_from_lvl t n (n.lvl + 1) x in
-      let xs = successor_from_prefix prefix_node x in
-      let xp = predecessor_from_prefix prefix_node x in
+      let xs = successor_from_prefix t prefix_node x in
+      let xp = predecessor_from_prefix t prefix_node x in
       let new_node = insert_node_aux t prefix_node x xp xs in
+      (* if x > Option.get (Option.get t.max).value then
+        t.max <- Some new_node;
+      if x < Option.get (Option.get t.min).value then
+        t.min <- Some new_node;
+      assert (new_node.lvl = t.max_lvl); *)
+      (* Printf.printf "Yay\n"; *)
       if xs <> None then begin
         let cn = ref (new_node) in
         let cs = ref (Option.get xs) in
@@ -251,6 +341,10 @@ module Sequential (T : XfastTabl) = struct
     if not (mem t x) then () else begin
       let xnode = Option.get @@ T.find_in_level t.tables t.max_lvl x in
       let xp = xnode.left and xs = xnode.right in
+      (* if x = Option.get (Option.get t.max).value then
+        t.max <- xp;
+      if x = Option.get (Option.get t.min).value then
+        t.min <- xs; *)
       let rec delete_aux n rem =
         if n == t.root then () else begin
           let parent = Option.get n.parent in

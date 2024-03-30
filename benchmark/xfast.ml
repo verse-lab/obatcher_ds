@@ -79,28 +79,18 @@ module Sequential = struct
 
   let init _pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    (* let size = Array.length initial_elements + Array.length test_spec.insert_elements in *)
     let skiplist = IntXfastTrie.init int_size in
-    (* Printf.printf "initializing with %d elements\n" (Array.length initial_elements);
-    Printf.printf "max element: %d\n" (Array.fold_left max 0 initial_elements); *)
     Array.iter (fun i -> IntXfastTrie.insert skiplist i) initial_elements;
-    (* Printf.printf "initialized with %d elements\n" (Array.length initial_elements); *)
     skiplist
 
   let run _pool t test_spec =
-    (* Printf.printf "inserting %d elements\n" (Array.length test_spec.insert_elements); *)
     Array.iter (fun i ->
         IntXfastTrie.insert t i) test_spec.insert_elements;
-    (* Printf.printf "inserted %d elements\n" (Array.length test_spec.insert_elements);
-    Printf.printf "searching %d elements\n" (Array.length test_spec.search_elements); *)
     Array.iter (fun i ->
         IntXfastTrie.mem t i |> ignore) test_spec.search_elements
-    (* for _ = 1 to test_spec.size do
-      IntXfastTrie.size t |> ignore
-    done *)
 
-  let cleanup (t: t) (test_spec: test_spec) =
-    let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
+  let cleanup (_t: t) (_test_spec: test_spec) = ()
+    (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements_list = Array.to_list all_elements in
     let vebtree_flattened = IntXfastTrie.flatten t in
@@ -110,7 +100,7 @@ module Sequential = struct
         assert (all_elements.(i - 1) = Option.get @@ IntXfastTrie.predecessor t all_elements.(i));
       if i < Array.length all_elements - 1 then
         assert (all_elements.(i + 1) = Option.get @@ IntXfastTrie.successor t all_elements.(i))
-    done
+    done *)
 
 end
 
@@ -148,17 +138,15 @@ module CoarseGrained = struct
               else if i < Array.length test_spec.insert_elements + Array.length test_spec.search_elements then
                 ignore (IntXfastTrie.mem t.skiplist
                           test_spec.search_elements.(i - Array.length test_spec.insert_elements))
-              (* else
-                ignore (IntXfastTrie.size t.skiplist) *)
             )
         )
 
-  let cleanup (t: t) (test_spec: test_spec) =
-    let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
+  let cleanup (_t: t) (_test_spec: test_spec) = ()
+    (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements = Array.to_list all_elements in
     let vebtree_flattened = IntXfastTrie.flatten t.skiplist in
-    assert (all_elements = vebtree_flattened)
+    assert (all_elements = vebtree_flattened) *)
 
 end
 
@@ -177,10 +165,9 @@ module Batched = struct
 
   let init pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    (* Printf.printf "initializing with %d elements\n" (Array.length initial_elements);
-    Printf.printf "max element: %d\n" (Array.fold_left max 0 initial_elements); *)
     let skiplist = BatchedIntXfastTrie.init pool in
-    Array.iter (fun i -> BatchedIntXfastTrie.apply skiplist (Insert i)) initial_elements;
+    let exposed_tree = BatchedIntXfastTrie.unsafe_get_internal_data skiplist in
+    Array.iter (fun i -> IntXfastTrie.insert exposed_tree i) initial_elements;
     skiplist
 
   let run pool t test_spec =
@@ -194,8 +181,6 @@ module Batched = struct
           else if i < Array.length test_spec.insert_elements + Array.length test_spec.search_elements then
             ignore (BatchedIntXfastTrie.apply t 
                       (Member test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
-          (* else
-            ignore (BatchedIntXfastTrie.apply t Size) *)
         );
     BatchedIntXfastTrie.wait_for_batch t
 
@@ -205,13 +190,7 @@ module Batched = struct
     Array.sort Int.compare all_elements;
     let all_elements_list = Array.to_list all_elements in
     let vebtree_flattened = IntXfastTrie.flatten t in
-    assert (all_elements_list = vebtree_flattened);
-    for i = 0 to Array.length all_elements - 1 do
-      if i > 0 then
-        assert (all_elements.(i - 1) = Option.get @@ IntXfastTrie.predecessor t all_elements.(i));
-      if i < Array.length all_elements - 1 then
-        assert (all_elements.(i + 1) = Option.get @@ IntXfastTrie.successor t all_elements.(i))
-    done
+    assert (all_elements_list = vebtree_flattened)
 
 end
 

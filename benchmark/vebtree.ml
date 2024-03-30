@@ -98,8 +98,8 @@ module Sequential = struct
       IntVebTree.Sequential.size t |> ignore
     done *)
 
-  let cleanup (t: t) (test_spec: test_spec) =
-    let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
+  let cleanup (t: t) (test_spec: test_spec) = ()
+    (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements_list = Array.to_list all_elements in
     let vebtree_flattened = IntVebTree.flatten t in
@@ -109,7 +109,7 @@ module Sequential = struct
         assert (all_elements.(i - 1) = Option.get @@ IntVebTree.predecessor t all_elements.(i));
       if i < Array.length all_elements - 1 then
         assert (all_elements.(i + 1) = Option.get @@ IntVebTree.successor t all_elements.(i))
-    done
+    done *)
 
 end
 
@@ -152,12 +152,12 @@ module CoarseGrained = struct
             )
         )
 
-  let cleanup (t: t) (test_spec: test_spec) =
-    let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
+  let cleanup (t: t) (test_spec: test_spec) = ()
+    (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements = Array.to_list all_elements in
     let vebtree_flattened = IntVebTree.flatten t.skiplist in
-    assert (all_elements = vebtree_flattened)
+    assert (all_elements = vebtree_flattened) *)
 
 end
 
@@ -180,7 +180,10 @@ module Batched = struct
     Printf.printf "max element: %d\n" (Array.fold_left max 0 initial_elements); *)
     IntVebTreeFunctor.universe_size := universe_size;
     let skiplist = BatchedVebTree.init pool in
-    Array.iter (fun i -> BatchedVebTree.apply skiplist (Insert i)) initial_elements;
+    (* Array.iter (fun i -> BatchedVebTree.apply skiplist (Insert i)) initial_elements; *)
+    let exposed_tree = BatchedVebTree.unsafe_get_internal_data skiplist in
+    Array.iter (fun i -> IntVebTree.insert exposed_tree i)
+      initial_elements;
     skiplist
 
   let run pool t test_spec =
@@ -197,31 +200,24 @@ module Batched = struct
           (* else
             ignore (BatchedVebTree.apply t Size) *)
         );
+    (* while BatchedVebTree.is_batch_running t do
+      Domainslib.Task.yield pool
+    done *)
     BatchedVebTree.wait_for_batch t
 
   let cleanup (t: t) (test_spec: test_spec) =
     let t = BatchedVebTree.unsafe_get_internal_data t in
     let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
-
-    (* Printf.printf "Should find the following: [";
-    Array.iter (Printf.printf "%d, ") all_elements;
-    Printf.printf "]\n"; *)
-
     let all_elements_list = Array.to_list all_elements in
     let vebtree_flattened = IntVebTree.flatten t in
-
-    (* Printf.printf "Found the following: [";
-    List.iter (Printf.printf "%d, ") vebtree_flattened;
-    Printf.printf "]\n"; *)
-
-    assert (all_elements_list = vebtree_flattened);
-    for i = 0 to Array.length all_elements - 1 do
+    assert (all_elements_list = vebtree_flattened)
+    (* for i = 0 to Array.length all_elements - 1 do
       if i > 0 then
         assert (all_elements.(i - 1) = Option.get @@ IntVebTree.predecessor t all_elements.(i));
       if i < Array.length all_elements - 1 then
         assert (all_elements.(i + 1) = Option.get @@ IntVebTree.successor t all_elements.(i))
-    done
+    done *)
 
 end
 

@@ -218,8 +218,9 @@ module Batched = struct
   let init pool test_spec =
     generic_init test_spec (fun initial_elements ->
       let tree = BatchedIntAvltree.init pool in
-      Array.iter (fun i -> BatchedIntAvltree.apply tree (Insert (i, ())))
-        initial_elements;
+      let exposed_tree = BatchedIntAvltree.unsafe_get_internal_data tree in
+      Array.iter (fun i -> IntAvltree.insert i () exposed_tree) initial_elements;
+      BatchedIntAvltree.restart_batcher_timer tree;
       tree)
 
   let run pool (tree: t) test_spec =
