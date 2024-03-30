@@ -2,7 +2,7 @@ B := ../_build/default/benchmark/bench.exe
 WARMUP := 5
 ITER := 5
 
-B_PRESET := 2_000_000
+B_PRESET := 0
 B_OPS := 1_000_000
 B_SEARCH := 0
 btree : btree.ml
@@ -30,18 +30,18 @@ btree : btree.ml
 	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 8
 
 btree-batched :
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 2 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 3 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 4 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 5 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
-	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 2
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 3
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 4
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 5
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 6
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 7
+	$(B) btree-batched --init-count=$(B_PRESET) --count=$(B_OPS) --no-searches=$(B_SEARCH) -i $(ITER) -w $(WARMUP) -D 8
 
 AVL_PRESET := 2_000_000
-AVL_OPS := 1_000_000
-AVL_SEARCH := 0
+AVL_OPS := 0
+AVL_SEARCH := 1_000_000
 avltree : avltree.ml
 	printf "Avltree-Sequential\n"
 	$(B) avltree-sequential --init-count=$(AVL_PRESET) --count=$(AVL_OPS) --no-searches=$(AVL_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
@@ -85,6 +85,16 @@ rbtree : rbtree.ml
 	$(B) rbtree-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
 	$(B) rbtree-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
 	$(B) rbtree-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
+
+rbtree-explicitly-batched :
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 1 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 2 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 3 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 4 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 5 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 6 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 7 -T
+	$(B) rbtree-explicitly-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 8 -T
 
 rbtree-batched :
 	$(B) rbtree-batched --init-count=$(RB_PRESET) --count=$(RB_OPS) --no-searches=$(RB_SEARCH) -i $(ITER) -w $(WARMUP) -D 1
