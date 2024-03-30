@@ -137,9 +137,7 @@ module Make (P : Prebatch) = struct
   let run t (pool: Domainslib.Task.pool) (ops: wrapped_op array) : unit =
     let inserts: S.kt list ref = ref [] in
     let searches: (S.kt * (bool -> unit)) list ref = ref [] in
-    (* let size = lazy (Sequential.size t) in *)
     Array.iter (function
-        (* | Mk (Size, kont) -> kont (Lazy.force size) *)
         | Mk (Member vl, kont) -> searches := (vl,kont) :: !searches
         | Mk (Insert vl, kont) -> kont (); inserts := vl :: !inserts
       ) ops;
@@ -153,7 +151,6 @@ module Make (P : Prebatch) = struct
         );
     (* now, all inserts *)
     let inserts = Array.of_list !inserts in
-    (* Printf.printf "Inserting batched now with %d elements.\n" (Array.length inserts); *)
     par_insert ~pool t ~inserts
 
 end

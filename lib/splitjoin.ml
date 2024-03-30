@@ -306,9 +306,9 @@ module Make (P : Prebatch) = struct
     match !search_type with
     | 0 -> 
       let node = P.peek_root t in
-      (* if Array.length keys < search_threshold then
+      if Array.length keys < search_threshold then
         Array.iter (fun (k, kont) -> kont @@ P.search_node k node) keys
-      else *)
+      else
         Domainslib.Task.parallel_for pool ~start:0 ~finish:(Array.length keys - 1) ~body:(fun i ->
           let (k,kont) = keys.(i) in
           kont @@ P.search_node k node)
