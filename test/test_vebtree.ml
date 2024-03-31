@@ -1,6 +1,6 @@
 [@@@warning "-32-26-35"]
 
-module VEBTree = Obatcher_ds.Vebgeneral.Sequential;;
+module VEBTree = Obatcher_ds.Vebtree.Sequential;;
 
 let num_nodes = 1 lsl 22;;
 let max_key = num_nodes;;

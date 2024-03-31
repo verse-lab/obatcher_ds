@@ -1,5 +1,5 @@
 [@@@warning "-32-26"]
-module IntTreap = Obatcher_ds.Treapclean.Sequential(Int);;
+module IntTreap = Obatcher_ds.Treap.Sequential(Int);;
 let num_nodes = 10000000;;
 let max_key = num_nodes;;
 Printf.printf "\nTesting Treap with max %d nodes...\n" num_nodes;;

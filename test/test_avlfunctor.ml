@@ -1,6 +1,6 @@
-module IntAvltree = Obatcher_ds.Avlclean.Sequential(Int);;
-module IntAvltreePrebatch = Obatcher_ds.Avlclean.Prebatch(Int);;
-module IntAvltreeSplitJoin = Obatcher_ds.Splitjoinclean.Make(IntAvltreePrebatch);;
+module IntAvltree = Obatcher_ds.Avltree.Sequential(Int);;
+module IntAvltreePrebatch = Obatcher_ds.Avltree.Prebatch(Int);;
+module IntAvltreeSplitJoin = Obatcher_ds.Splitjoin.Make(IntAvltreePrebatch);;
 
 let num_nodes = 11000000;;
 let max_key = num_nodes;;

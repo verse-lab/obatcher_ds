@@ -36,20 +36,20 @@ end
 let benchmarks: (string, (module BENCHMARK)) Hashtbl.t = Hashtbl.create 32
 
 let () =
-  Hashtbl.add benchmarks "rbtree-sequential" (module Rbclean.Sequential);
-  Hashtbl.add benchmarks "rbtree-coarse-grained" (module Rbclean.CoarseGrained);
-  Hashtbl.add benchmarks "rbtree-batched" (module Rbclean.Batched);
-  Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbclean.ExplicitlyBatched);
+  Hashtbl.add benchmarks "rbtree-sequential" (module Rbtree.Sequential);
+  Hashtbl.add benchmarks "rbtree-coarse-grained" (module Rbtree.CoarseGrained);
+  Hashtbl.add benchmarks "rbtree-batched" (module Rbtree.Batched);
+  Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbtree.ExplicitlyBatched);
 
-  Hashtbl.add benchmarks "avltree-sequential" (module Avlclean.Sequential);
-  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avlclean.CoarseGrained);
-  Hashtbl.add benchmarks "avltree-batched" (module Avlclean.Batched);
-  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avlclean.ExplicitlyBatched);
+  Hashtbl.add benchmarks "avltree-sequential" (module Avltree.Sequential);
+  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltree.CoarseGrained);
+  Hashtbl.add benchmarks "avltree-batched" (module Avltree.Batched);
+  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltree.ExplicitlyBatched);
 
-  Hashtbl.add benchmarks "treap-sequential" (module Treapclean.Sequential);
-  Hashtbl.add benchmarks "treap-coarse-grained" (module Treapclean.CoarseGrained);
-  Hashtbl.add benchmarks "treap-batched" (module Treapclean.Batched);
-  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treapclean.ExplicitlyBatched);
+  Hashtbl.add benchmarks "treap-sequential" (module Treap.Sequential);
+  Hashtbl.add benchmarks "treap-coarse-grained" (module Treap.CoarseGrained);
+  Hashtbl.add benchmarks "treap-batched" (module Treap.Batched);
+  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treap.ExplicitlyBatched);
 
   Hashtbl.add benchmarks "btree-sequential" (module Btree.Sequential);
   Hashtbl.add benchmarks "btree-coarse-grained" (module Btree.CoarseGrained);

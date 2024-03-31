@@ -1,7 +1,7 @@
-module IntAvltree = Obatcher_ds.Treapclean.Sequential(Int)
-module IntAvltreePrebatch = Obatcher_ds.Treapclean.Prebatch(Int)
-module IntAvltreeSplitJoin = Obatcher_ds.Splitjoinclean.Make(IntAvltreePrebatch)
-module BatchedIntAvltree = Domainslib.Batcher.Make1(IntAvltreeSplitJoin)
+module IntTreap = Obatcher_ds.Treap.Sequential(Int)
+module IntTreapPrebatch = Obatcher_ds.Treap.Prebatch(Int)
+module IntTreapSplitJoin = Obatcher_ds.Splitjoin.Make(IntTreapPrebatch)
+module BatchedIntTreap = Domainslib.Batcher.Make1(IntTreapSplitJoin)
 
 type generic_spec_args = {
   sorted: bool;
@@ -60,15 +60,15 @@ let generic_test_spec ~count spec_args =
   { args=spec_args; count: int; insert_elements=[| |]; search_elements=[| |]; initial_elements=[| |] }
 
 let generic_run test_spec f =
-  let old_search_threshold = !IntAvltreeSplitJoin.search_op_threshold in
-  let old_insert_threshold = !IntAvltreeSplitJoin.insert_op_threshold in
+  let old_search_threshold = !IntTreapSplitJoin.search_op_threshold in
+  let old_insert_threshold = !IntTreapSplitJoin.insert_op_threshold in
   (match test_spec.args.search_threshold with None -> () | Some st ->
-    IntAvltreeSplitJoin.search_op_threshold := st);
+    IntTreapSplitJoin.search_op_threshold := st);
   (match test_spec.args.insert_threshold with None -> () | Some it ->
-    IntAvltreeSplitJoin.insert_op_threshold := it);
+    IntTreapSplitJoin.insert_op_threshold := it);
   let res = f () in
-  IntAvltreeSplitJoin.search_op_threshold := old_search_threshold;
-  IntAvltreeSplitJoin.insert_op_threshold := old_insert_threshold;
+  IntTreapSplitJoin.search_op_threshold := old_search_threshold;
+  IntTreapSplitJoin.insert_op_threshold := old_insert_threshold;
   res
   
 let generic_init test_spec f =
@@ -94,7 +94,7 @@ let generic_init test_spec f =
 
 module Sequential = struct
 
-  type t = unit IntAvltree.t
+  type t = unit IntTreap.t
 
   type test_spec = generic_test_spec
 
@@ -107,8 +107,8 @@ module Sequential = struct
 
   let init _pool test_spec =
     generic_init test_spec (fun initial_elements ->
-      let tree = IntAvltree.init () in
-      Array.iter (fun i -> IntAvltree.insert i () tree)
+      let tree = IntTreap.init () in
+      Array.iter (fun i -> IntTreap.insert i () tree)
         initial_elements;
       tree
     )
@@ -116,16 +116,16 @@ module Sequential = struct
   let run _pool t test_spec =
     generic_run test_spec @@ fun () -> 
     Array.iter (fun i ->
-        IntAvltree.insert i () t
+        IntTreap.insert i () t
       ) test_spec.insert_elements;
     Array.iter (fun i ->
-        ignore @@ IntAvltree.search i t
+        ignore @@ IntTreap.search i t
       ) test_spec.search_elements
 
   let cleanup (t: t) (test_spec: test_spec) = 
     if test_spec.args.should_validate then begin
       Array.iter (fun elt ->
-        match IntAvltree.search elt t with
+        match IntTreap.search elt t with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
       ) test_spec.insert_elements;
@@ -134,7 +134,7 @@ end
 
 module CoarseGrained = struct
 
-  type t = {tree: unit IntAvltree.t; mutex: Mutex.t}
+  type t = {tree: unit IntTreap.t; mutex: Mutex.t}
 
   type test_spec = generic_test_spec
 
@@ -147,8 +147,8 @@ module CoarseGrained = struct
 
   let init _pool test_spec =
     generic_init test_spec (fun initial_elements ->
-      let tree = IntAvltree.init () in
-      Array.iter (fun i -> IntAvltree.insert i () tree)
+      let tree = IntTreap.init () in
+      Array.iter (fun i -> IntTreap.insert i () tree)
         initial_elements;
       let mutex = Mutex.create () in
       {tree;mutex}
@@ -162,8 +162,8 @@ module CoarseGrained = struct
           Mutex.lock t.mutex;
           Fun.protect ~finally:(fun () -> Mutex.unlock t.mutex) (fun () ->
               if i < Array.length test_spec.insert_elements
-              then IntAvltree.insert test_spec.insert_elements.(i) () t.tree
-              else ignore (IntAvltree.search
+              then IntTreap.insert test_spec.insert_elements.(i) () t.tree
+              else ignore (IntTreap.search
                              test_spec.search_elements.(i - Array.length test_spec.insert_elements) t.tree)
             )
         )
@@ -171,7 +171,7 @@ module CoarseGrained = struct
   let cleanup (t: t) (test_spec: test_spec) =
     if test_spec.args.should_validate then begin
       Array.iter (fun elt ->
-        match IntAvltree.search elt t.tree with
+        match IntTreap.search elt t.tree with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
       ) test_spec.insert_elements
@@ -181,7 +181,7 @@ end
 
 module Batched = struct
 
-  type t = unit BatchedIntAvltree.t
+  type t = unit BatchedIntTreap.t
 
   type test_spec = generic_test_spec
 
@@ -194,9 +194,9 @@ module Batched = struct
 
   let init pool test_spec =
     generic_init test_spec (fun initial_elements ->
-      let tree = BatchedIntAvltree.init pool in
-      let exposed_tree = BatchedIntAvltree.unsafe_get_internal_data tree in
-      Array.iter (fun i -> IntAvltree.insert i () exposed_tree)
+      let tree = BatchedIntTreap.init pool in
+      let exposed_tree = BatchedIntTreap.unsafe_get_internal_data tree in
+      Array.iter (fun i -> IntTreap.insert i () exposed_tree)
         initial_elements;
       tree)
 
@@ -206,21 +206,21 @@ module Batched = struct
       ~start:0 ~finish:(Array.length test_spec.insert_elements + Array.length test_spec.search_elements - 1)
       ~body:(fun i ->
         if i < Array.length test_spec.insert_elements
-        then BatchedIntAvltree.apply tree (Insert (test_spec.insert_elements.(i), ()))
+        then BatchedIntTreap.apply tree (Insert (test_spec.insert_elements.(i), ()))
         else 
-          ignore (BatchedIntAvltree.apply tree (Search test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
+          ignore (BatchedIntTreap.apply tree (Search test_spec.search_elements.(i - Array.length test_spec.insert_elements)))
       );
-    BatchedIntAvltree.wait_for_batch tree
+    BatchedIntTreap.wait_for_batch tree
 
   let cleanup (t: t) (test_spec: test_spec) =
     if test_spec.args.should_validate then begin
-      let t = BatchedIntAvltree.unsafe_get_internal_data t in
-      let num_nodes = IntAvltree.num_nodes t in
+      let t = BatchedIntTreap.unsafe_get_internal_data t in
+      let num_nodes = IntTreap.num_nodes t in
       if num_nodes <> Array.length test_spec.insert_elements + Array.length test_spec.initial_elements
         then Format.ksprintf failwith "Inserted %d elements, but found only %d in the tree"
       (Array.length test_spec.insert_elements + Array.length test_spec.initial_elements)
       num_nodes;
-      let btree_flattened = IntAvltree.flatten t |> Array.of_list in
+      let btree_flattened = IntTreap.flatten t |> Array.of_list in
       let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
       Array.sort Int.compare all_elements;
       if Array.length btree_flattened <> Array.length all_elements then
@@ -234,7 +234,7 @@ module Batched = struct
       done;
 
       Array.iter (fun elt ->
-        match IntAvltree.search elt t with
+        match IntTreap.search elt t with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
       ) test_spec.insert_elements;
@@ -244,7 +244,7 @@ end
 
 module ExplicitlyBatched = struct
 
-  type t = unit IntAvltree.t
+  type t = unit IntTreap.t
 
   type test_spec = {
     spec: generic_test_spec;
@@ -264,27 +264,27 @@ module ExplicitlyBatched = struct
     generic_init test_spec.spec (fun initial_elements ->
       test_spec.insert_elements <- Array.map (fun i -> (i, ())) test_spec.spec.insert_elements;
       test_spec.search_elements <- Array.map (fun i -> (i, (fun _ -> ()))) test_spec.spec.search_elements;
-      let tree = IntAvltree.init () in
-      Array.iter (fun i -> IntAvltree.insert i () tree)
+      let tree = IntTreap.init () in
+      Array.iter (fun i -> IntTreap.insert i () tree)
         initial_elements;
       tree)
 
   let run pool (tree: t) test_spec =
     generic_run test_spec.spec @@ fun () -> 
     if Array.length test_spec.insert_elements > 0 then
-      IntAvltreeSplitJoin.par_insert ~pool tree test_spec.insert_elements;
+      IntTreapSplitJoin.par_insert ~pool tree test_spec.insert_elements;
     if Array.length test_spec.spec.search_elements > 0 then
-      ignore @@ IntAvltreeSplitJoin.par_search ~pool tree test_spec.search_elements
+      ignore @@ IntTreapSplitJoin.par_search ~pool tree test_spec.search_elements
 
 
   let cleanup (t: t) (test_spec: test_spec) =
     if test_spec.spec.args.should_validate then begin
-      let num_nodes = IntAvltree.num_nodes t in
+      let num_nodes = IntTreap.num_nodes t in
       if num_nodes <> Array.length test_spec.insert_elements + Array.length test_spec.spec.initial_elements
         then Format.ksprintf failwith "Inserted %d elements, but found only %d in the tree"
       (Array.length test_spec.insert_elements + Array.length test_spec.spec.initial_elements)
       num_nodes;
-      let btree_flattened = IntAvltree.flatten t |> Array.of_list in
+      let btree_flattened = IntTreap.flatten t |> Array.of_list in
       let all_elements = Array.concat [test_spec.spec.insert_elements; test_spec.spec.initial_elements] in
       Array.sort Int.compare all_elements;
       if Array.length btree_flattened <> Array.length all_elements then
@@ -298,7 +298,7 @@ module ExplicitlyBatched = struct
       done;
 
       Array.iter (fun elt ->
-        match IntAvltree.search elt t with
+        match IntTreap.search elt t with
         | Some _ -> ()
         | None -> Format.ksprintf failwith "Could not find inserted element %d in tree" elt
       ) test_spec.spec.insert_elements;

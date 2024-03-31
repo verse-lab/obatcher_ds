@@ -4,8 +4,6 @@ module IntYfastTrie = Obatcher_ds.Yfast.Sequential
 module IntYfastTriePrebatch = Obatcher_ds.Yfast.Prebatch
 module IntYfastTrieFunctor = Obatcher_ds.Exposerepair.Make(IntYfastTriePrebatch)
 module BatchedYfastTrie = Domainslib.Batcher.Make(IntYfastTrieFunctor)
-(* module ExplicitlyBatchedSkiplist = Data.Skiplist.Make(Int)
-module LazySkiplist = Data.Lazy_slist.Make(struct include Int let hash t = t end) *)
 
 let int_size = 24
 
@@ -13,13 +11,11 @@ type generic_test_spec = {
   initial_elements: int array;
   insert_elements : int array;
   search_elements : int array;
-  (* size : int *)
 }
 
 type generic_spec_args = {
   sorted : bool;
   no_searches : int;
-  (* no_size : int; *)
   initial_count: int;
   min: int;
   max: int;
@@ -30,8 +26,6 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
   let sorted = Arg.(value @@ flag  @@ info ~doc:"whether the inserts should be sorted" ["s"; "sorted"]) in
   let no_searches =
     Arg.(value @@ opt (some int) None @@ info ~doc:"number of searches" ~docv:"NO_SEARCHES" ["n"; "no-searches"]) in
-  (* let no_size = 
-    Arg.(value @@ opt (some int) None @@ info ~doc:"number of size operation calls" ~docv:"NO_SIZE" ["n_sz"; "no-size"]) in *)
   let initial_count =
     Arg.(value @@ opt (some int) None @@ info ~doc:"Initial number of operations" ["init-count"]) in
   let min =
@@ -42,10 +36,8 @@ let generic_spec_args: generic_spec_args Cmdliner.Term.t =
     {
       sorted;
       no_searches=Option.value ~default:0 no_searches;
-      (* no_size=Option.value ~default:0 no_size; *)
       initial_count=Option.value ~default:0 initial_count;
       min=Option.value ~default:0 min;
-      (* max=Option.value ~default:((Int.shift_left 1 30) - 1) max; *)
       max=Option.value ~default:(1 lsl int_size - 1) max;
     }) $ sorted $ no_searches $ initial_count $ min $ max)
 
@@ -74,9 +66,9 @@ module Sequential = struct
 
   let init _pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    let skiplist = IntYfastTrie.init int_size in
-    Array.iter (fun i -> IntYfastTrie.insert skiplist i) initial_elements;
-    skiplist
+    let yfast = IntYfastTrie.init int_size in
+    Array.iter (fun i -> IntYfastTrie.insert yfast i) initial_elements;
+    yfast
 
   let run _pool t test_spec =
     Array.iter (fun i -> IntYfastTrie.insert t i) test_spec.insert_elements;
@@ -100,7 +92,7 @@ end
 
 module CoarseGrained = struct
 
-  type t = {skiplist : IntYfastTrie.t; mutex : Mutex.t}
+  type t = {yfast : IntYfastTrie.t; mutex : Mutex.t}
 
   type test_spec = generic_test_spec
 
@@ -114,9 +106,9 @@ module CoarseGrained = struct
 
   let init _pool test_spec = 
     let initial_elements = test_spec.initial_elements in
-    let skiplist = IntYfastTrie.init int_size in
-    Array.iter (fun i -> IntYfastTrie.insert skiplist i) initial_elements;
-    {skiplist; mutex=Mutex.create ()}
+    let yfast = IntYfastTrie.init int_size in
+    Array.iter (fun i -> IntYfastTrie.insert yfast i) initial_elements;
+    {yfast; mutex=Mutex.create ()}
 
   let run pool t test_spec =
     let total = Array.length test_spec.insert_elements + Array.length test_spec.search_elements - 1 in
@@ -126,9 +118,9 @@ module CoarseGrained = struct
           Mutex.lock t.mutex;
           Fun.protect ~finally:(fun () -> Mutex.unlock t.mutex) (fun () ->
               if i < Array.length test_spec.insert_elements
-              then IntYfastTrie.insert t.skiplist test_spec.insert_elements.(i)
+              then IntYfastTrie.insert t.yfast test_spec.insert_elements.(i)
               else if i < Array.length test_spec.insert_elements + Array.length test_spec.search_elements then
-                ignore (IntYfastTrie.mem t.skiplist
+                ignore (IntYfastTrie.mem t.yfast
                           test_spec.search_elements.(i - Array.length test_spec.insert_elements))
             )
         )
@@ -137,7 +129,7 @@ module CoarseGrained = struct
     (* let all_elements = Array.concat [test_spec.insert_elements; test_spec.initial_elements] in
     Array.sort Int.compare all_elements;
     let all_elements = Array.to_list all_elements in
-    let vebtree_flattened = IntYfastTrie.flatten t.skiplist in
+    let vebtree_flattened = IntYfastTrie.flatten t.yfast in
     assert (all_elements = vebtree_flattened) *)
 
 end
@@ -158,10 +150,10 @@ module Batched = struct
   let init pool test_spec = 
     let initial_elements = test_spec.initial_elements in
     IntYfastTrieFunctor.universe_size := int_size;
-    let skiplist = BatchedYfastTrie.init pool in
-    let exposed_tree = BatchedYfastTrie.unsafe_get_internal_data skiplist in
+    let yfast = BatchedYfastTrie.init pool in
+    let exposed_tree = BatchedYfastTrie.unsafe_get_internal_data yfast in
     Array.iter (fun i -> IntYfastTrie.insert exposed_tree i) initial_elements;
-    skiplist
+    yfast
 
   let run pool t test_spec =
     let total = Array.length test_spec.insert_elements + Array.length test_spec.search_elements - 1 in
@@ -192,31 +184,3 @@ module Batched = struct
     done
 
 end
-
-(* module ExplicitBatched = struct
-
-  type t = ExplicitlyBatchedSkiplist.t
-
-  type test_spec = generic_test_spec
-
-  type spec_args = generic_spec_args
-
-  let spec_args: spec_args Cmdliner.Term.t = generic_spec_args
-
-  let test_spec ~count spec_args =
-    generic_test_spec ~count spec_args
-
-  let init _pool test_spec = 
-    let initial_elements = test_spec.initial_elements () in
-    let skiplist = ExplicitlyBatchedSkiplist.init () in
-    Array.iter (fun i -> ExplicitlyBatchedSkiplist.Sequential.insert skiplist i) initial_elements;
-    skiplist
-
-  let run pool t test_spec =
-    ExplicitlyBatchedSkiplist.par_insert t pool test_spec.insert_elements;
-    if test_spec.size > 0 then ignore @@ ExplicitlyBatchedSkiplist.par_size t pool (Array.make test_spec.size 0);
-    ignore @@ ExplicitlyBatchedSkiplist.par_search t pool test_spec.search_elements
-
-  let cleanup (_t: t) (_test_spec: test_spec) = ()
-
-end *)

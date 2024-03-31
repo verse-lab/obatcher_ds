@@ -35,7 +35,7 @@ module Sequential = struct
   type kt = Int.t
 
   module Xfast = Xfast.Sequential(HashXfastTabl)
-  module Rbtree = Rbclean.Prebatch(Int)
+  module Rbtree = Rbtree.Prebatch(Int)
 
   type t = {
     int_size : int;

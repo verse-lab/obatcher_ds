@@ -1,7 +1,7 @@
 [@@@warning "-32-26"]
-module IntRbtree = Obatcher_ds.Rbclean.Sequential(Int);;
-module IntRbtreePrebatch = Obatcher_ds.Rbclean.Prebatch(Int);;
-module IntRbtreeSplitJoin = Obatcher_ds.Splitjoinclean.Make(IntRbtreePrebatch);;
+module IntRbtree = Obatcher_ds.Rbtree.Sequential(Int);;
+module IntRbtreePrebatch = Obatcher_ds.Rbtree.Prebatch(Int);;
+module IntRbtreeSplitJoin = Obatcher_ds.Splitjoin.Make(IntRbtreePrebatch);;
 
 let num_nodes = 10000000;;
 let max_key = num_nodes;;

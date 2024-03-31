@@ -1,14 +1,7 @@
-module IntAvltree = Obatcher_ds.Avlclean.Sequential(Int)
-module IntAvltreePrebatch = Obatcher_ds.Avlclean.Prebatch(Int)
-module IntAvltreeSplitJoin = Obatcher_ds.Splitjoinclean.Make(IntAvltreePrebatch)
+module IntAvltree = Obatcher_ds.Avltree.Sequential(Int)
+module IntAvltreePrebatch = Obatcher_ds.Avltree.Prebatch(Int)
+module IntAvltreeSplitJoin = Obatcher_ds.Splitjoin.Make(IntAvltreePrebatch)
 module BatchedIntAvltree = Domainslib.Batcher.Make1(IntAvltreeSplitJoin)
-(* module IntAvltree = Obatcher_ds.Avl.Sequential(Int)
-module IntAvltreePrebatch = Obatcher_ds.Avl.Prebatch(Int)
-module IntAvltreeSplitJoin = Obatcher_ds.Binarysplitjoin.Make(IntAvltreePrebatch)
-module BatchedIntAvltree = Domainslib.Batcher.Make1(IntAvltreeSplitJoin) *)
-(* module IntAvltreeSplitJoin = Obatcher_ds.Binarysplitjoin.Make(Obatcher_ds.Avl.Prebatch(Int))
-module IntAvltree = Obatcher_ds.Binarysplitjoin.Make(Obatcher_ds.Avlfunctor.AvlTree(Int))
-module BatchedIntAvltree = Domainslib.Batcher.Make1(IntAvltree) *)
 
 type generic_spec_args = {
   sorted: bool;
