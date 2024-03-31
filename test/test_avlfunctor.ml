@@ -1,6 +1,6 @@
-module IntAvltree = Obatcher_ds.Avlgeneral.Sequential(Int);;
-module IntAvltreePrebatch = Obatcher_ds.Avlgeneral.Prebatch(Int);;
-module IntAvltreeSplitJoin = Obatcher_ds.Splitjoin.Make(IntAvltreePrebatch);;
+module IntAvltree = Obatcher_ds.Avlclean.Sequential(Int);;
+module IntAvltreePrebatch = Obatcher_ds.Avlclean.Prebatch(Int);;
+module IntAvltreeSplitJoin = Obatcher_ds.Splitjoinclean.Make(IntAvltreePrebatch);;
 
 let num_nodes = 11000000;;
 let max_key = num_nodes;;
@@ -34,7 +34,7 @@ let pivot_arr = Array.init num_pivots (fun _ -> Random.full_int max_key);;
 Array.sort Int.compare pivot_arr;;
 
 let st = Sys.time();;
-let split_arr = IntAvltreePrebatch.split pivot_arr at;;
+let split_arr = IntAvltreeSplitJoin.split pivot_arr at;;
 Printf.printf "Split time for AVL tree: %fs\n" (Sys.time() -. st);;
 
 Printf.printf "%d\n" (Array.length pivot_arr);;

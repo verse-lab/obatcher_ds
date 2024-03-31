@@ -35,7 +35,7 @@ module Sequential = struct
   type kt = Int.t
 
   module Xfast = Xfast.Sequential(HashXfastTabl)
-  module Rbtree = Rbgeneral.Prebatch(Int)
+  module Rbtree = Rbclean.Prebatch(Int)
 
   type t = {
     int_size : int;
@@ -87,7 +87,7 @@ module Sequential = struct
     Printf.printf "Woohoo\n"; *)
     let pivot = rb_min + (rb_max - rb_min) / 2 in
     (* Printf.printf "Pivot is %d\n" pivot; *)
-    let left_tree, right_tree = Rbtree.split_two rb pivot in
+    let left_tree, right_tree = Rbtree.split rb pivot in
     (* let left_flat = Rbtree.S.flatten left_tree in
     let right_flat = Rbtree.S.flatten right_tree in
     Printf.printf "Left: [";
@@ -158,7 +158,7 @@ module Sequential = struct
 
       if rb_idx_pred != None then begin
         let rb_pred = Hashtbl.find t.rb_layer @@ Option.get rb_idx_pred in
-        let new_rb = Rbtree.join_two rb_pred rb_tree in
+        let new_rb = Rbtree.join rb_pred rb_tree in
         remove_rb_tree t @@ Option.get rb_idx_pred;
         remove_rb_tree t rb_idx;
         let new_rb_min =
@@ -173,7 +173,7 @@ module Sequential = struct
 
       end else if Xfast.successor t.xfast_layer rb_idx != None then begin
         let rb_succ = Hashtbl.find t.rb_layer @@ Option.get rb_idx_succ in
-        let new_rb = Rbtree.join_two rb_tree rb_succ in
+        let new_rb = Rbtree.join rb_tree rb_succ in
         remove_rb_tree t @@ Option.get rb_idx_succ;
         remove_rb_tree t rb_idx;
         let new_rb_min =
