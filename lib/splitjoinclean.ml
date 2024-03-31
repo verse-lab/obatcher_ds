@@ -1,10 +1,7 @@
 module type Sequential = sig
 
-  (* Types for sequential implementation *)
-  type kt       (* Key type *)
+  type kt
   type 'a t
-
-  (* Basic lookup and update operations *)
 
   val init : unit -> 'a t
 
@@ -33,17 +30,11 @@ module type Prebatch = sig
       Red-Black tree, etc.) *)
 
   val join : 'a S.t -> 'a S.t -> 'a S.t
-  (** [join arr] joins all data structures in [arr] together. [arr] must be sorted and
-      the data structures in [arr] must not have overlapping ranges of keys. *)
+  (** [join arr] joins two data structures together. They must be provided in
+      order and must not have overlapping ranges of keys. *)
 
-  (* Separate module with only split_two? *)
   val split : 'a S.t -> S.kt -> 'a S.t * 'a S.t
-  (** [split arr t] splits [t] into an array of disjoint data structures. For each
-      key [i] in sorted [arr], we would have 2 data structures where one has all its node
-      keys less than [i] and the other has all its node keys equal or greater than [i].
-      The final number of data structures returned should be [Array.length arr + 1],
-      including empty ones where necessary, and in the same order as [arr].
-      Updates to any resulting data structure must NOT modify the others. *)
+  (** [split t k] splits t into two data structures at [k] *)
 
 end
 

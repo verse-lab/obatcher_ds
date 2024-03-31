@@ -36,40 +36,20 @@ end
 let benchmarks: (string, (module BENCHMARK)) Hashtbl.t = Hashtbl.create 32
 
 let () =
-  (* Hashtbl.add benchmarks "rbtree-sequential" (module Rbtree.Sequential);
-  Hashtbl.add benchmarks "rbtree-coarse-grained" (module Rbtree.CoarseGrained);
-  Hashtbl.add benchmarks "rbtree-batched" (module Rbtree.Batched);
-  Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbtree.ExplicitlyBatched); *)
+  Hashtbl.add benchmarks "rbtree-sequential" (module Rbclean.Sequential);
+  Hashtbl.add benchmarks "rbtree-coarse-grained" (module Rbclean.CoarseGrained);
+  Hashtbl.add benchmarks "rbtree-batched" (module Rbclean.Batched);
+  Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbclean.ExplicitlyBatched);
 
-  Hashtbl.add benchmarks "rbtree-sequential" (module Rbfunctor.Sequential);
-  Hashtbl.add benchmarks "rbtree-coarse-grained" (module Rbfunctor.CoarseGrained);
-  Hashtbl.add benchmarks "rbtree-batched" (module Rbfunctor.Batched);
-  Hashtbl.add benchmarks "rbtree-explicitly-batched" (module Rbfunctor.ExplicitlyBatched);
+  Hashtbl.add benchmarks "avltree-sequential" (module Avlclean.Sequential);
+  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avlclean.CoarseGrained);
+  Hashtbl.add benchmarks "avltree-batched" (module Avlclean.Batched);
+  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avlclean.ExplicitlyBatched);
 
-  (* Hashtbl.add benchmarks "avltree-sequential" (module Avltree.Sequential);
-  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltree.CoarseGrained);
-  Hashtbl.add benchmarks "avltree-batched" (module Avltree.Batched);
-  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltree.ExplicitlyBatched); *)
-
-  Hashtbl.add benchmarks "avltree-sequential" (module Avltreefunctor.Sequential);
-  Hashtbl.add benchmarks "avltree-coarse-grained" (module Avltreefunctor.CoarseGrained);
-  Hashtbl.add benchmarks "avltree-batched" (module Avltreefunctor.Batched);
-  Hashtbl.add benchmarks "avltree-explicitly-batched" (module Avltreefunctor.ExplicitlyBatched);
-
-  Hashtbl.add benchmarks "linkedlist-sequential" (module Orderedlinkedlist.Sequential);
-  Hashtbl.add benchmarks "linkedlist-coarse-grained" (module Orderedlinkedlist.CoarseGrained);
-  Hashtbl.add benchmarks "linkedlist-batched" (module Orderedlinkedlist.Batched);
-  Hashtbl.add benchmarks "linkedlist-explicitly-batched" (module Orderedlinkedlist.ExplicitlyBatched);
-
-  (* Hashtbl.add benchmarks "treap-sequential" (module Treap.Sequential);
-  Hashtbl.add benchmarks "treap-coarse-grained" (module Treap.CoarseGrained);
-  Hashtbl.add benchmarks "treap-batched" (module Treap.Batched);
-  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treap.ExplicitlyBatched); *)
-
-  Hashtbl.add benchmarks "treap-sequential" (module Treapfunctor.Sequential);
-  Hashtbl.add benchmarks "treap-coarse-grained" (module Treapfunctor.CoarseGrained);
-  Hashtbl.add benchmarks "treap-batched" (module Treapfunctor.Batched);
-  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treapfunctor.ExplicitlyBatched);
+  Hashtbl.add benchmarks "treap-sequential" (module Treapclean.Sequential);
+  Hashtbl.add benchmarks "treap-coarse-grained" (module Treapclean.CoarseGrained);
+  Hashtbl.add benchmarks "treap-batched" (module Treapclean.Batched);
+  Hashtbl.add benchmarks "treap-explicitly-batched" (module Treapclean.ExplicitlyBatched);
 
   Hashtbl.add benchmarks "btree-sequential" (module Btree.Sequential);
   Hashtbl.add benchmarks "btree-coarse-grained" (module Btree.CoarseGrained);
@@ -79,12 +59,10 @@ let () =
   Hashtbl.add benchmarks "vebtree-sequential" (module Vebtree.Sequential);
   Hashtbl.add benchmarks "vebtree-coarse-grained" (module Vebtree.CoarseGrained);
   Hashtbl.add benchmarks "vebtree-batched" (module Vebtree.Batched);
-  (* Hashtbl.add benchmarks "vebtree-explicitly-batched" (module Vebtree.ExplicitlyBatched) *)
 
   Hashtbl.add benchmarks "xfast-sequential" (module Xfast.Sequential);
   Hashtbl.add benchmarks "xfast-coarse-grained" (module Xfast.CoarseGrained);
   Hashtbl.add benchmarks "xfast-batched" (module Xfast.Batched);
-  (* Hashtbl.add benchmarks "xfast-explicitly-batched" (module Xfast.ExplicitlyBatched) *)
 
   Hashtbl.add benchmarks "yfast-sequential" (module Yfast.Sequential);
   Hashtbl.add benchmarks "yfast-coarse-grained" (module Yfast.CoarseGrained);
