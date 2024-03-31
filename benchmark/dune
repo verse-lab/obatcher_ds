@@ -9,5 +9,6 @@
   ; progress bars
   progress
   domainslib
-  obatcher_ds)
+  obatcher_ds
+  datalog)
  (modes native))

@@ -88,7 +88,18 @@ let () =
 
   Hashtbl.add benchmarks "yfast-sequential" (module Yfast.Sequential);
   Hashtbl.add benchmarks "yfast-coarse-grained" (module Yfast.CoarseGrained);
-  Hashtbl.add benchmarks "yfast-batched" (module Yfast.Batched)
+  Hashtbl.add benchmarks "yfast-batched" (module Yfast.Batched);
+
+  Hashtbl.add benchmarks "skiplist-sequential" (module Skiplist.Sequential);
+  Hashtbl.add benchmarks "skiplist-coarse-grained" (module Skiplist.CoarseGrained);
+  Hashtbl.add benchmarks "skiplist-batched" (module Skiplist.Batched);
+  Hashtbl.add benchmarks "skiplist-explicitly-batched" (module Skiplist.ExplicitBatched);
+  Hashtbl.add benchmarks "skiplist-fine-grained" (module Skiplist.Lazy);
+
+  Hashtbl.add benchmarks "datalog-sequential" (module Datalog_bench.Sequential);
+  Hashtbl.add benchmarks "datalog-coarse" (module Datalog_bench.CoarseGrained);
+  Hashtbl.add benchmarks "datalog-batched" (module Datalog_bench.BatchParallel);
+  Hashtbl.add benchmarks "datalog-non-parallel-batched" (module Datalog_bench.BatchParallelBasic)
 
 
 

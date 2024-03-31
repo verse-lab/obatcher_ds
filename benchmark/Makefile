@@ -2,7 +2,7 @@ B := ../_build/default/benchmark/bench.exe
 WARMUP := 5
 ITER := 5
 
-B_PRESET := 0
+B_PRESET := 1_000_000
 B_OPS := 1_000_000
 B_SEARCH := 0
 btree : btree.ml
@@ -158,7 +158,6 @@ linkedlist : orderedlinkedlist.ml
 
 VEB_PRESET := 2_000_000
 VEB_INS := 1_000_000
-# Need to fix assertion error with search
 VEB_SEARCH := 0
 vebtree : vebtree.ml
 	printf "vebtree-Sequential\n"
@@ -187,7 +186,6 @@ vebtree : vebtree.ml
 
 XFAST_PRESET := 2_000_000
 XFAST_INS := 1_000_000
-# Need to fix assertion error with search
 XFAST_SEARCH := 0
 xfast : xfast.ml
 	printf "xfast-Sequential\n"
@@ -215,7 +213,6 @@ xfast : xfast.ml
 
 YFAST_PRESET := 2_000_000
 YFAST_INS := 1_000_000
-# Need to fix assertion error with search
 YFAST_SEARCH := 0
 yfast : yfast.ml
 	printf "yfast-Sequential\n"
@@ -230,3 +227,34 @@ yfast : yfast.ml
 	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 6
 	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 7
 	$(B) yfast-batched --init-count=$(YFAST_PRESET) --count=$(YFAST_INS) -i $(ITER) --no-searches=$(YFAST_SEARCH) -w $(WARMUP) -D 8
+
+
+S_PRESET := 1_000_000
+S_INS := 2_000_000
+S_SEARCH := 0
+S_SIZE := 0
+skiplist-batched :
+	printf "Skiplist-Batched\n"
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 1
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 2
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 3
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 4
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 5
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 6
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 7
+	$(B) skiplist-batched --init-count=$(S_PRESET) --count=$(S_INS) -i $(ITER) --no-searches=$(S_SEARCH) --no-size=$(S_SIZE) -w $(WARMUP) -D 8
+
+D_PRESET := 30_000
+D_NODES := 200
+D_INSERT := 5_000
+D_SEARCH := 45_000
+datalog-batched :
+	printf "Datalog-Batched\n"
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 1
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 2
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 3
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 4
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 5
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 6
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 7
+	$(B) datalog-batched --init-count=$(D_PRESET) --graph-nodes=$(D_NODES) --count=$(D_INSERT) -i $(ITER) --no-searches=$(D_SEARCH) -w $(WARMUP) -D 8
