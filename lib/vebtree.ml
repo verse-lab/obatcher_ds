@@ -192,19 +192,19 @@ module Prebatch = struct
       arr.(i) <- Sequential.high t arr.(i) * num_elem_per_cluster
     done *)
 
-  let expose_t (t: S.t) (arr: S.kt array) =
+  let expose (t: S.t) (arr: S.kt array) =
     (make_pivots t arr, ())
     (* let n_elem = S.lower_sqrt t.uni_size in
     let pivots = Array.init (S.upper_sqrt t.uni_size - 1) (fun i -> (i + 1) * n_elem) in
     (pivots, Option.get t.clusters) *)
 
-  let insert_t t arr _dt range =
+  let insert_sub_batch t arr _dt range =
     let clusters = S.clusters t in
     for i = fst range to snd range - 1 do
       S.insert clusters.(S.high t arr.(i)) (S.low t arr.(i))
     done
 
-  let repair_t (t: S.t) _dt =
+  let repair (t: S.t) _dt =
     let clusters = Option.get t.clusters in
 
     (* Update summary and find minimum and maximum elements in the cluster *)

@@ -30,11 +30,11 @@ module type Prebatch = sig
   val compare : S.kt -> S.kt -> int
   (** Should expose the comparison function for the ordered key type. *)
 
-  val expose_t : S.t -> S.kt array -> S.kt array * dt
+  val expose : S.t -> S.kt array -> S.kt array * dt
 
-  val insert_t : S.t -> S.kt array -> dt -> int * int -> unit
+  val insert_sub_batch : S.t -> S.kt array -> dt -> int * int -> unit
 
-  val repair_t : S.t -> dt -> unit
+  val repair : S.t -> dt -> unit
 
 end
 
@@ -119,7 +119,7 @@ module Make (P : Prebatch) = struct
       let num_par = n / !insert_op_threshold + if n mod !insert_op_threshold > 0 then 1 else 0 in
       let pivot_seeds = Array.init num_par (fun i -> inserts.(i)) in (* Assume insert operations are random *)
       Sort.sort pool ~compare pivot_seeds;
-      let (pivots_arr, dt) = P.expose_t t pivot_seeds in
+      let (pivots_arr, dt) = P.expose t pivot_seeds in
       let npivots = Array.make (Array.length pivots_arr) 0 in
       partition_par pool npivots inserts pivots_arr 0 n;
       let ranges = Array.init
@@ -130,8 +130,8 @@ module Make (P : Prebatch) = struct
           else (npivots.(i - 1), npivots.(i))) in
       Domainslib.Task.parallel_for pool
         ~start:0 ~finish:(Array.length ranges - 1) ~chunk_size:1
-        ~body:(fun i -> P.insert_t t inserts dt ranges.(i));
-      P.repair_t t dt
+        ~body:(fun i -> P.insert_sub_batch t inserts dt ranges.(i));
+      P.repair t dt
     end
 
   let run t (pool: Domainslib.Task.pool) (ops: wrapped_op array) : unit =
