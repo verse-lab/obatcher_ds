@@ -185,3 +185,27 @@ pip install -r requirements.txt
 
 When running the Jupyter Notebook, use the virtual environment set up above.
 
+
+## Project structure 
+
+The project is structured as follows:
+
+```
+.
+|-- README.md
+|-- obatcher_ds.opam
+|-- requirements.txt
+|-- dune
+|-- dune-project
+|-- lib/
+|-- benchmark/
+|-- test/
+`-- obatcher/
+```
+
+The directories are:
+
+- `lib/` -- contains the implementation of our functors and instantiations for each of the data-structures described in the paper
+- `benchmark/` -- contains code for running the experiments from the paper
+- `test/` -- unit tests to check the correctness of our implementations
+- `obatcher/` -- lightly modified version of OCaml's domainslib library that exposes a `Promise.create` function.
