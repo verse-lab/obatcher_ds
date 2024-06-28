@@ -151,14 +151,32 @@ files in the results directory:
 
 - Reproducing figure 23:
    ```
-   $ (cd ./results && pdflatex search-plots.tex && open ./search-plots.pdf)
+   $ (cd ./results && pdflatex search-plots.tex)
+   $ open ./results/search-plots.pdf
    ```
 
 - Reproducing figure 24:
 
    ```
-   $ (cd ./results && pdflatex datalog-plot.tex && open ./datalog-plot.pdf)
+   $ (cd ./results && pdflatex datalog-plot.tex)
+   $ open ./results/datalog-plot.pdf
    ```
+
+Note: if you are running inside a docker container, then you can retrieve the generated pdf files on your host by copying
+
+```
+$ docker cp <container-id>:/home/opam/results/search-plots.pdf ./
+$ docker cp <container-id>:/home/opam/results/datalog-plot.pdf ./
+```
+
+You can retrieve the container id by running `docker container ls`:
+
+```
+$ docker container ls 
+CONTAINER ID   IMAGE             COMMAND               CREATED          STATUS          PORTS     NAMES
+1a7475605c74   obatcher:latest   "opam exec -- bash"   53 seconds ago   Up 51 seconds             elastic_moore
+```
+
 
 [1] Optionally, in order to reproduce the experiments on the hardware
 used in the paper, if requested we can provide limited time access to
