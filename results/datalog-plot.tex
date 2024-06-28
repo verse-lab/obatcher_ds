@@ -1,0 +1,57 @@
+\documentclass{article}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+
+\usepgfplotslibrary{groupplots}
+
+
+\begin{document}
+
+\begin{tikzpicture}[scale=0.60]
+\pgfplotsset{
+xticklabel style={
+        % font=\footnotesize,
+        /pgfplots/xtick pos=bottom,
+        /pgfplots/xtick align=outside,
+},
+yticklabel style={
+        % font=\footnotesize,
+        % /pgf/number format/fixed,
+        % /pgf/number format/precision=5
+        /pgfplots/ytick pos=left,
+        /pgfplots/ytick align=outside,
+},
+% ytick scale label code/.code={}
+}
+    \begin{axis}[
+      height=5cm,width=8cm,
+      legend style={at={(0.45,1.4)},anchor=north,font=\small, legend columns = -1},
+      % xlabel = {\# Domains},
+      ylabel = {Throughput (ops/sec)},
+      title = {(90/10) Queries/Inserts},
+      scaled y ticks={base 10:-4},
+      ymin=0, ymax=200000,   
+      ytick distance=50000
+      ]
+\legend{Batched, Coarse-grained, Batched (Sequential)};
+\addplot[mark=otimes*, color=red, mark size=2.2pt]
+table [x=domains, y=datalog-batched-throughput, y
+error=datalog-batched-sd, col sep=comma]              
+{./datalog_results.csv};
+\addplot[mark=x,color=black, mark size=2.7pt]                         
+table [x=domains, y=datalog-coarse-throughput, y
+error=datalog-coarse-sd, col sep=comma]                
+{./datalog_results.csv};
+\addplot[mark=square*,color=cyan, mark size=2.0pt]      
+table [x=domains, y=datalog-non-parallel-batched-throughput, y
+error=datalog-batched-sd, col sep=comma] 
+{./datalog_results.csv};
+
+\end{axis}
+\end{tikzpicture}
+\end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../paper"
+%%% End:

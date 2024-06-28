@@ -124,6 +124,53 @@ memory to the container and as such tasks are being killed by OOM.
 
 
 ## Reproducing experiments
+In the paper we ran our experiments on an AWS EC2 c7i.12xlarge server
+instance equipped x86 Intel® Xeon® Scalable (Sapphire Rapids)
+processor with 24 physical cores and 96 GB of memory, running Ubuntu
+22.02 with OCaml 5.1.1. [1]
+
+As this requires dedicated hardware to fully reproduce, our artefact
+provides a scaled down set of experiments that should produce the same
+trends while being viable to run on commodity hardware.
+
+In order to reproduce the experiments, run the script
+`paper-bench.py`. This will run all experiments from the paper, on up
+to 8 cores[2] on your machine, and dump the timing information into
+the results folder.
+
+Note: The script runs 33 experiments in total, each experiment
+considers a different configuration of data-structure and
+inserts/searches split, and measures the overall time for varying
+numbers of domains, from 1 to 8. Each such run takes ~5 minutes, so
+overall, the time taken for the script to run will be `8 * 33 * 5` ~
+1320 mins or around 22 hours.
+
+Once the script has completed, you will be able to recreate Figure 23
+and Figure 24 from the paper by running pdflatex on the two `.tex`
+files in the results directory:
+
+- Reproducing figure 23:
+   ```
+   $ (cd ./results && pdflatex search-plots.tex && open ./search-plots.pdf)
+   ```
+
+- Reproducing figure 24:
+
+   ```
+   $ (cd ./results && pdflatex datalog-plot.tex && open ./datalog-plot.pdf)
+   ```
+
+[1] Optionally, in order to reproduce the experiments on the hardware
+used in the paper, if requested we can provide limited time access to
+an AWS server to run the experiments --- to keep costs down, the
+server can only be kept up for a couple of days, so please contact the
+authors promptly if you wish to perform this evaluation.
+
+[2] `paper-bench.py` only runs the experiments up to 8 domains, while
+the paper shows trends up to 16. If running on a machine that has up
+to 16 cores, then one can run experiments over more cores by changing
+line 9 in `paper-bench.py` to `# domains = list(range(1, 17))`
+
 
 # Batch Parallel Data Structures with Obatcher: Developer Instructions
 
