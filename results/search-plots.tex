@@ -1,0 +1,648 @@
+\documentclass{article}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+
+\usepgfplotslibrary{groupplots}
+
+
+\begin{document}
+
+\begin{tikzpicture}[scale=0.8]
+\pgfplotsset{
+xticklabel style={
+        font=\footnotesize,
+        /pgfplots/xtick pos=bottom,
+        /pgfplots/xtick align=outside,
+},
+yticklabel style={
+        font=\footnotesize,
+        % /pgf/number format/fixed,
+        % /pgf/number format/precision=5
+        /pgfplots/ytick pos=left,
+        /pgfplots/ytick align=outside,
+},
+ytick scale label code/.code={}
+% scaled y ticks=false
+}
+\begin{groupplot}[
+group style={group size=4 by 8, vertical sep=1cm},height=3.285cm,width=48mm,
+legend style={at={(-1.575,12.65)},anchor=south,font=\normalsize, legend columns=-1}
+]
+
+  % Red-black tree
+
+  \nextgroupplot[
+    ylabel = {\small{Red-black tree}},
+    title = {\small{Inserts only}},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=rbtree-sequential-throughput, col sep=comma]
+    {./rb_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=rbtree-batched-throughput, col sep=comma]
+    {./rb_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=rbtree-coarse-grained-throughput, col sep=comma]
+    {./rb_insert_only_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    title = {\small{Searches only}},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=rbtree-sequential-throughput, col sep=comma]
+    {./rb_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=rbtree-batched-throughput, col sep=comma]
+    {./rb_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=rbtree-coarse-grained-throughput, col sep=comma]
+    {./rb_search_only_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    title = {\small{Searches/Inserts (50/50)}},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=rbtree-sequential-throughput, col sep=comma]
+    {./rb_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=rbtree-batched-throughput, col sep=comma]
+    {./rb_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=rbtree-coarse-grained-throughput, col sep=comma]
+    {./rb_50_50_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    title = {\small{Searches/Inserts (90/10)}},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=rbtree-sequential-throughput, col sep=comma]
+    {./rb_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=rbtree-batched-throughput, col sep=comma]
+    {./rb_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=rbtree-coarse-grained-throughput, col sep=comma]
+    {./rb_90_10_results.csv};
+
+  % AVL tree
+  
+  \nextgroupplot[
+    ylabel = {\small{AVL tree}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=avltree-sequential-throughput, col sep=comma]
+    {./avl_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=avltree-batched-throughput, col sep=comma]
+    {./avl_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=avltree-coarse-grained-throughput, col sep=comma]
+    {./avl_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=avltree-sequential-throughput, col sep=comma]
+    {./avl_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=avltree-batched-throughput, col sep=comma]
+    {./avl_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=avltree-coarse-grained-throughput, col sep=comma]
+    {./avl_search_only_results.csv};
+  
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=avltree-sequential-throughput, col sep=comma]
+    {./avl_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=avltree-batched-throughput, col sep=comma]
+    {./avl_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=avltree-coarse-grained-throughput, col sep=comma]
+    {./avl_50_50_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=avltree-sequential-throughput, col sep=comma]
+    {./avl_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=avltree-batched-throughput, col sep=comma]
+    {./avl_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=avltree-coarse-grained-throughput, col sep=comma]
+    {./avl_90_10_results.csv};
+
+
+
+  % Treap
+  
+  \nextgroupplot[
+    ylabel = {\small{Treap}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=treap-sequential-throughput, col sep=comma]
+    {./treap_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=treap-batched-throughput, col sep=comma]
+    {./treap_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=treap-coarse-grained-throughput, col sep=comma]
+    {./treap_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=treap-sequential-throughput, col sep=comma]
+    {./treap_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=treap-batched-throughput, col sep=comma]
+    {./treap_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=treap-coarse-grained-throughput, col sep=comma]
+    {./treap_search_only_results.csv};
+  
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=treap-sequential-throughput, col sep=comma]
+    {./treap_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=treap-batched-throughput, col sep=comma]
+    {./treap_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=treap-coarse-grained-throughput, col sep=comma]
+    {./treap_50_50_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=treap-sequential-throughput, col sep=comma]
+    {./treap_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=treap-batched-throughput, col sep=comma]
+    {./treap_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=treap-coarse-grained-throughput, col sep=comma]
+    {./treap_90_10_results.csv};
+
+
+
+
+  % vEB tree
+  
+  \nextgroupplot[
+    ylabel = {\small{vEB tree}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=vebtree-sequential-throughput, col sep=comma]
+    {./veb_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=vebtree-batched-throughput, col sep=comma]
+    {./veb_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=vebtree-coarse-grained-throughput, col sep=comma]
+    {./veb_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=vebtree-sequential-throughput, col sep=comma]
+    {./veb_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=vebtree-batched-throughput, col sep=comma]
+    {./veb_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=vebtree-coarse-grained-throughput, col sep=comma]
+    {./veb_search_only_results.csv};
+  
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=vebtree-sequential-throughput, col sep=comma]
+    {./veb_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=vebtree-batched-throughput, col sep=comma]
+    {./veb_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=vebtree-coarse-grained-throughput, col sep=comma]
+    {./veb_50_50_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=vebtree-sequential-throughput, col sep=comma]
+    {./veb_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=vebtree-batched-throughput, col sep=comma]
+    {./veb_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=vebtree-coarse-grained-throughput, col sep=comma]
+    {./veb_90_10_results.csv};
+
+
+
+
+  % X-fast
+  
+  \nextgroupplot[
+    ylabel = {\small{X-fast trie}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000,
+    % xlabel = {\# Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=xfast-sequential-throughput, col sep=comma]
+    {./xfast_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=xfast-batched-throughput, col sep=comma]
+    {./xfast_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=xfast-coarse-grained-throughput, col sep=comma]
+    {./xfast_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=xfast-sequential-throughput, col sep=comma]
+    {./xfast_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=xfast-batched-throughput, col sep=comma]
+    {./xfast_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=xfast-coarse-grained-throughput, col sep=comma]
+    {./xfast_search_only_results.csv};
+  
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=xfast-sequential-throughput, col sep=comma]
+    {./xfast_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=xfast-batched-throughput, col sep=comma]
+    {./xfast_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=xfast-coarse-grained-throughput, col sep=comma]
+    {./xfast_50_50_results.csv};
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=xfast-sequential-throughput, col sep=comma]
+    {./xfast_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=xfast-batched-throughput, col sep=comma]
+    {./xfast_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=xfast-coarse-grained-throughput, col sep=comma]
+    {./xfast_90_10_results.csv};
+
+
+
+  % Y-fast
+  
+  \nextgroupplot[
+    ylabel = {\small{Y-fast trie}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=yfast-sequential-throughput, col sep=comma]
+    {./yfast_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=yfast-batched-throughput, col sep=comma]
+    {./yfast_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=yfast-coarse-grained-throughput, col sep=comma]
+    {./yfast_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=yfast-sequential-throughput, col sep=comma]
+    {./yfast_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=yfast-batched-throughput, col sep=comma]
+    {./yfast_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=yfast-coarse-grained-throughput, col sep=comma]
+    {./yfast_search_only_results.csv};
+  
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=yfast-sequential-throughput, col sep=comma]
+    {./yfast_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=yfast-batched-throughput, col sep=comma]
+    {./yfast_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=yfast-coarse-grained-throughput, col sep=comma]
+    {./yfast_50_50_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=yfast-sequential-throughput, col sep=comma]
+    {./yfast_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=yfast-batched-throughput, col sep=comma]
+    {./yfast_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=yfast-coarse-grained-throughput, col sep=comma]
+    {./yfast_90_10_results.csv};
+
+
+
+
+  % Btree
+  
+  \nextgroupplot[
+    ylabel = {\small{B-tree}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=btree-sequential-throughput, col sep=comma]
+    {./btree_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=btree-batched-throughput, col sep=comma]
+    {./btree_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=btree-coarse-grained-throughput, col sep=comma]
+    {./btree_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=btree-sequential-throughput, col sep=comma]
+    {./btree_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=btree-batched-throughput, col sep=comma]
+    {./btree_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=btree-coarse-grained-throughput, col sep=comma]
+    {./btree_search_only_results.csv};
+  
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=btree-sequential-throughput, col sep=comma]
+    {./btree_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=btree-batched-throughput, col sep=comma]
+    {./btree_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=btree-coarse-grained-throughput, col sep=comma]
+    {./btree_50_50_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=btree-sequential-throughput, col sep=comma]
+    {./btree_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=btree-batched-throughput, col sep=comma]
+    {./btree_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=btree-coarse-grained-throughput, col sep=comma]
+    {./btree_90_10_results.csv};
+
+
+  % Skiplist
+
+  \nextgroupplot[
+    ylabel = {\small{Skip list}},
+    % title = {Inserts only},
+    ymin=0, ymax=1500000,   
+    ytick distance=400000
+    % xlabel = {No. Domains}
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=skiplist-sequential-throughput, col sep=comma]
+    {./skiplist_insert_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=skiplist-batched-throughput, col sep=comma]
+    {./skiplist_insert_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=skiplist-coarse-grained-throughput, col sep=comma]
+    {./skiplist_insert_only_results.csv};
+  \addplot[mark=triangle*,color=cyan]
+    table [x=domains, y=skiplist-fine-grained-throughput, col sep=comma]
+    {./skiplist_insert_only_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {No. Domains},
+    % title = {Searches only},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=skiplist-sequential-throughput, col sep=comma]
+    {./skiplist_search_only_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=skiplist-batched-throughput, col sep=comma]
+    {./skiplist_search_only_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=skiplist-coarse-grained-throughput, col sep=comma]
+    {./skiplist_search_only_results.csv};
+  \addplot[mark=triangle*,color=cyan]
+    table [x=domains, y=skiplist-fine-grained-throughput, col sep=comma]
+    {./skiplist_search_only_results.csv};
+  
+
+  \nextgroupplot[
+    % ylabel = {Time (s)},
+    % xlabel = {\# Domains},
+    % title = {(50/50) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=skiplist-sequential-throughput, col sep=comma]
+    {./skiplist_50_50_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=skiplist-batched-throughput, col sep=comma]
+    {./skiplist_50_50_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=skiplist-coarse-grained-throughput, col sep=comma]
+    {./skiplist_50_50_results.csv};
+  \addplot[mark=triangle*,color=cyan]
+    table [x=domains, y=skiplist-fine-grained-throughput, col sep=comma]
+    {./skiplist_50_50_results.csv};
+
+
+  \nextgroupplot[
+    % ylabel = {ops/s},
+    % xlabel = {\# Domains},
+    % title = {(90/10) Searches/Inserts},
+    ymin=0, ymax=1500000,
+    ytick distance=400000
+  ]
+  \addplot[dashed, thick, color=blue]
+    table [x=domains, y=skiplist-sequential-throughput, col sep=comma]
+    {./skiplist_90_10_results.csv};
+  \addplot[mark=otimes*, color=red, mark size=1.3pt]
+    table [x=domains, y=skiplist-batched-throughput, col sep=comma]
+    {./skiplist_90_10_results.csv};
+  \addplot[mark=x,color=black]
+    table [x=domains, y=skiplist-coarse-grained-throughput, col sep=comma]
+    {./skiplist_90_10_results.csv};
+  \addplot[mark=triangle*,color=cyan]
+    table [x=domains, y=skiplist-fine-grained-throughput, col sep=comma]
+    {./skiplist_90_10_results.csv};
+
+
+
+  \legend{Sequential, Batched, Coarse-grained, Fine-grained (skip list only)}
+  
+
+\end{groupplot}
+\end{tikzpicture}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../paper"
+%%% End:

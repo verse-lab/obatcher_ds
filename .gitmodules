@@ -1,0 +1,3 @@
+[submodule "obatcher"]
+	path = obatcher
+	url = https://github.com/phongulus/obatcher.git#wait-for-batch

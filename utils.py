@@ -1,10 +1,10 @@
 import subprocess
 import matplotlib.pyplot as plt
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import csv
 
 
-def run_process(name, no_iters=5, count=1_000_000, 
+def run_process(name, no_iters=5, count=1_000_000,
                 domains=16,
                 no_warmup=None,
                 validate=False,
@@ -20,7 +20,7 @@ def run_process(name, no_iters=5, count=1_000_000,
                 expensive_searches=None
                 ):
     name_args = name.split(" ")
-    cmd = ["../_build/default/benchmark/bench.exe", *name_args, "-D", str(domains),
+    cmd = ["./_build/default/benchmark/bench.exe", *name_args, "-D", str(domains),
            "--no-iter", str(no_iters), "--count", str(count)]
     if validate:
         cmd += ["-T"]
@@ -44,7 +44,6 @@ def run_process(name, no_iters=5, count=1_000_000,
         cmd += ["--expensive-searches"]
     if no_warmup:
         cmd += ["--no-warmup", str(int(no_warmup))]
-
     result = subprocess.run(cmd, capture_output=True, check=True)
     stdout = result.stdout.decode("utf-8").splitlines()
     for output in stdout[:-1]:
@@ -85,7 +84,6 @@ def test_label(op):
         return op['label']
     else:
         raise ValueError(f'Invalid operation {op}')
-
 
 def build_results(data_structures, args, param='domains', values=None):
     results = []
