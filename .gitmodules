@@ -1,3 +1,7 @@
 [submodule "obatcher"]
 	path = obatcher
 	url = https://github.com/phongulus/obatcher.git#wait-for-batch
+[submodule "batcher-in-rs"]
+	path = batcher-in-rs
+	url = https://github.com/verse-lab/batcher-in-rs.git
+
