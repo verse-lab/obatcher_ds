@@ -31,7 +31,7 @@ Successfully tagged obatcher:latest
 
 This command will build a new docker image for obatcher, downloading
 any required system dependencies and OCaml packages, and building
-Sisyphus.
+obatcher.
 
 This process will take approximately 5 minutes on a commodity laptop.
 
@@ -52,7 +52,7 @@ $ eval $(opam env)
 ```
 
 The subsequent steps of this guide will assume that you are operating
-inside this container and will show how to run Sisyphus and produce
+inside this container and will show how to run obatcher and produce
 the benchmark results.
 
 ### Local Install
