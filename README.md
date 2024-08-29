@@ -1,5 +1,7 @@
 # Batch Parallel Data Structures with Obatcher: Artefact
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12604575.svg)](https://doi.org/10.5281/zenodo.12604575)
+
 This repository contains the associated artefact for the OOPSLA paper
 #608 "Concurrent Data Structures Made Easy".
 
