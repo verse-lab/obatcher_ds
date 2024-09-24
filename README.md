@@ -13,7 +13,7 @@ self-contained docker-file, and 2, as an local OCaml project, although
 this will require having opam installed on your system.
 
 The artefact also contains an example instantiation of our batching
-framework in Rust (under the directory `obatcher_in_rust`), and
+framework in Rust (under the directory `batcher-in-rs`), and
 running this will require having the rust toolchain installed.
 
 ## Setup
@@ -33,7 +33,7 @@ Successfully tagged obatcher:latest
 
 This command will build a new docker image for obatcher, downloading
 any required system dependencies and OCaml packages, and building
-Sisyphus.
+obatcher.
 
 This process will take approximately 5 minutes on a commodity laptop.
 
@@ -54,7 +54,7 @@ $ eval $(opam env)
 ```
 
 The subsequent steps of this guide will assume that you are operating
-inside this container and will show how to run Sisyphus and produce
+inside this container and will show how to run obatcher and produce
 the benchmark results.
 
 ### Local Install
@@ -164,7 +164,18 @@ files in the results directory:
    $ open ./results/datalog-plot.pdf
    ```
 
-Note: if you are running inside a docker container, then you can retrieve the generated pdf files on your host by copying
+To verify these results, in these graphs, you should be able to see
+the same trends as described in the paper: as the number of threads
+increases, the throughput of the batched data-structure will
+consistently surpass that of the coarse-grained implementation.
+
+Due to hardware differences, depending on the exact setup used to
+reproduce the results, the actual throughput may differ from the
+results in the paper, and the concurrent data-structures may not
+surpass the performance of sequential.
+
+Note: if you are running inside a docker container, then you can
+retrieve the generated pdf files on your host by copying
 
 ```
 $ docker cp <container-id>:/home/opam/results/search-plots.pdf ./
@@ -201,6 +212,9 @@ As this requires a custom version of the library `domainslib` for
 Multicore OCaml, it is advisable that you create a new `opam` switch
 to run this.
 
+Note: to preserve anonymity, the git urls have been redacted in this
+artefact.
+
 ## Build instructions
 
 First, set up OBatcher along with a new `opam` switch:
@@ -210,7 +224,7 @@ opam switch create obatcher_test ocaml.5.0.0
 eval $(opam env)
 opam update
 opam install dune batteries progress ptime cmdliner datalog
-opam pin add domainslib https://github.com/phongulus/obatcher.git\#wait-for-batch
+opam pin add domainslib <anon>/obatcher.git\#wait-for-batch
 ```
 
 Note: for VSCode users, you will want to run the following as well to reinstall the prerequisites for the OCaml Platform extension in the new switch:
@@ -222,7 +236,7 @@ opam install ocamlformat ocaml-lsp-server
 You can now clone and build the code in this repository.
 
 ```
-git clone https://github.com/phongulus/obatcher_ds.git obatcher_ds
+git <anon>/obatcher_ds.git obatcher_ds
 cd obatcher_ds
 dune build
 ```
@@ -267,7 +281,8 @@ The project is structured as follows:
 |-- lib/
 |-- benchmark/
 |-- test/
-`-- obatcher/
+|-- obatcher/
+`-- batcher-in-rs
 ```
 
 The directories are:
@@ -276,3 +291,4 @@ The directories are:
 - `benchmark/` -- contains code for running the experiments from the paper
 - `test/` -- unit tests to check the correctness of our implementations
 - `obatcher/` -- lightly modified version of OCaml's domainslib library that exposes a `Promise.create` function.
+- `batcher-in-rs/` -- An instantiation of the obatcher framework in terms of Rust's Async/Await primitives. 
